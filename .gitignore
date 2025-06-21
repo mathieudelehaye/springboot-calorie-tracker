@@ -30,3 +30,6 @@ replay_pid*
 build
 
 config/env.properties
+
+*.code-workspace
+project_structure.txt
