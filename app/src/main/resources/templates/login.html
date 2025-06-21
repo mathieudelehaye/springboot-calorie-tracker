@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Please Sign In</title>
+  <style>
+    /* you can add your custom styles here */
+    body { font-family: Arial, sans-serif; padding: 2em; }
+    form { max-width: 300px; margin: auto; }
+  </style>
+</head>
+<body>
+  <h1>Please sign in</h1>
+  <form th:action="@{/login}" method="post">
+    <div>
+      <label for="username">Username</label>
+      <!-- prefilled default -->
+      <input id="username" name="username" type="text"
+             value="Mathieu" autofocus />
+    </div>
+    <div>
+      <label for="password">Password</label>
+      <!-- prefilled default -->
+      <input id="password" name="password" type="password"
+             value="Mathieu" />
+    </div>
+    <div>
+      <button type="submit">Sign in</button>
+    </div>
+  </form>
+</body>
+</html>
