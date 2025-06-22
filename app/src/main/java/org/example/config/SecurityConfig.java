@@ -42,15 +42,30 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-          .authenticationProvider(authenticationProvider())
-          .authorizeHttpRequests(auth -> auth
-              .anyRequest().authenticated()
-          )
-          .formLogin(form -> form
-              .loginPage("/login")      // custom page
-              .permitAll()
-          )
-          .httpBasic(Customizer.withDefaults());
+        .authenticationProvider(authenticationProvider())
+
+        // allow anyone to see the login page & static resources
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/login",                 // your custom login GET
+                "/css/**", "/js/**", "/images/**"  // adjust if you serve assets
+            ).permitAll()
+            .anyRequest().authenticated()       // everything else needs login
+        )
+
+        // form login on /login, always go to "/" after success
+        .formLogin(form -> form
+            .loginPage("/login")
+            .defaultSuccessUrl("/", true)   // ← send everyone to "/" after login
+            .permitAll()
+        )
+
+        // allow logout for everyone
+        .logout(logout -> logout.permitAll())
+
+        // (optional) you can keep HTTP Basic if you like
+        .httpBasic(Customizer.withDefaults());
+
         return http.build();
     }
 
