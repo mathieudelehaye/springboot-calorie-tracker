@@ -1,9 +1,64 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
 <head>
-    <title>Calorie Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MTL Coaching Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1 th:text="${message}">Hello!</h1>
+<body class="min-h-screen bg-gray-100 font-sans flex flex-col">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+
+        <!-- Left: App name -->
+        <div class="text-xl font-bold text-gray-800">
+          MTL Coaching Dashboard
+        </div>
+
+        <!-- Right: welcome + logout -->
+        <div class="flex items-center space-x-4">
+
+          <!-- Welcome, <username> -->
+          <span class="text-gray-600">
+            Welcome,
+            <span sec:authentication="name">Coach</span>
+          </span>
+
+          <!-- Logout button -->
+          <form th:action="@{/logout}" method="post" class="inline">
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button
+              type="submit"
+              class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+            >
+              Logout
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE CONTENT -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-6"
+        th:text="${message}">
+      Welcome to the Calorie Tracker!
+    </h1>
+    <!-- Dashboard content goes here -->
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-4 text-center text-gray-500 text-sm bg-white">
+    © Mathieu Delehaye 2025
+  </footer>
+
 </body>
 </html>
