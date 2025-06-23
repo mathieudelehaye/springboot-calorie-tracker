@@ -3,13 +3,16 @@ package org.example.controller;
 import org.example.model.*;
 import org.example.repository.*;
 import org.example.service.CoachUserDetailsService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class DashboardController {
@@ -132,5 +135,137 @@ public class DashboardController {
         food.setMeal(meal);
         foodRepo.save(food);
         return "redirect:/?athleteId=" + athleteId;
+    }
+
+    // === REST API endpoints for day management ===
+
+    /**
+     * Create a new day for an athlete
+     */
+    @PostMapping("/api/days")
+    @ResponseBody
+    public ResponseEntity<?> createDay(@RequestBody Map<String, Object> payload, Principal principal) {
+        try {
+            Object athleteIdObj = payload.get("athleteId");
+            Object dayNameObj = payload.get("dayName");
+            
+            if (athleteIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "athleteId is required"));
+            }
+            if (dayNameObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "dayName is required"));
+            }
+            
+            Long athleteId = Long.valueOf(athleteIdObj.toString());
+            String dayName = dayNameObj.toString();
+
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Athlete athlete = athleteRepo.findById(athleteId)
+                    .filter(a -> a.getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Athlete not found"));
+
+            // Check if this day name already exists for this athlete
+            if (dayRepo.findByAthleteAndDayName(athlete, dayName).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Day already exists for this athlete"));
+            }
+
+            Day day = new Day();
+            day.setAthlete(athlete);
+            day.setDayName(dayName);
+            day.setDate(LocalDate.now()); // You might want to make this more specific
+            
+            Day savedDay = dayRepo.save(day);
+            
+            return ResponseEntity.ok(Map.of(
+                "id", savedDay.getId(),
+                "dayName", savedDay.getDayName(),
+                "athleteId", savedDay.getAthlete().getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update a day's name
+     */
+    @PutMapping("/api/days/{dayId}")
+    @ResponseBody
+    public ResponseEntity<?> updateDay(@PathVariable Long dayId, @RequestBody Map<String, Object> payload, Principal principal) {
+        try {
+            String newDayName = payload.get("dayName").toString();
+
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Day day = dayRepo.findById(dayId)
+                    .filter(d -> d.getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Day not found"));
+
+            // Check if this day name already exists for this athlete (excluding current day)
+            if (dayRepo.findByAthleteAndDayNameAndIdNot(day.getAthlete(), newDayName, dayId).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Day name already exists for this athlete"));
+            }
+
+            day.setDayName(newDayName);
+            Day savedDay = dayRepo.save(day);
+            
+            return ResponseEntity.ok(Map.of(
+                "id", savedDay.getId(),
+                "dayName", savedDay.getDayName(),
+                "athleteId", savedDay.getAthlete().getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete a day
+     */
+    @DeleteMapping("/api/days/{dayId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteDay(@PathVariable Long dayId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Day day = dayRepo.findById(dayId)
+                    .filter(d -> d.getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Day not found"));
+
+            dayRepo.delete(day);
+            
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get days for an athlete
+     */
+    @GetMapping("/api/athletes/{athleteId}/days")
+    @ResponseBody
+    public ResponseEntity<?> getAthletesDays(@PathVariable Long athleteId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Athlete athlete = athleteRepo.findById(athleteId)
+                    .filter(a -> a.getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Athlete not found"));
+
+            List<Day> days = dayRepo.findByAthleteOrderByDateDesc(athlete);
+            
+            List<Map<String, Object>> dayData = days.stream()
+                    .map(day -> {
+                        Map<String, Object> dayMap = new HashMap<>();
+                        dayMap.put("id", day.getId());
+                        dayMap.put("dayName", day.getDayName() != null ? day.getDayName() : "Monday");
+                        dayMap.put("date", day.getDate().toString());
+                        dayMap.put("athleteId", day.getAthlete().getId());
+                        return dayMap;
+                    })
+                    .toList();
+            
+            return ResponseEntity.ok(dayData);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 } 

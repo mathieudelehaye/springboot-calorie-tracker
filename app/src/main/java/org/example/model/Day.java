@@ -12,6 +12,9 @@ public class Day extends BaseEntity {
     @Column(nullable = false)
     private LocalDate date;
 
+    @Column(nullable = true)
+    private String dayName; // Monday, Tuesday, etc.
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "athlete_id", nullable = false)
     private Athlete athlete;
@@ -28,6 +31,12 @@ public class Day extends BaseEntity {
         setAthlete(athlete);
     }
 
+    public Day(LocalDate date, String dayName, Athlete athlete) {
+        this.date = date;
+        this.dayName = dayName;
+        setAthlete(athlete);
+    }
+
     // Getters and Setters
 
     public LocalDate getDate() {
@@ -36,6 +45,14 @@ public class Day extends BaseEntity {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public String getDayName() {
+        return dayName;
+    }
+
+    public void setDayName(String dayName) {
+        this.dayName = dayName;
     }
 
     public Athlete getAthlete() {
