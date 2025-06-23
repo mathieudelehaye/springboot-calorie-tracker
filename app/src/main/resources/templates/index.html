@@ -1,43 +1,34 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MTL Coaching Dashboard</title>
+  <title>Calorie Tracker</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gray-100 font-sans flex flex-col">
+<body class="min-h-screen flex flex-col bg-gray-100 font-sans">
 
   <!-- NAVBAR -->
   <nav class="bg-white shadow">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16 items-center">
-
-        <!-- Left: App name -->
+        <!-- App name -->
         <div class="text-xl font-bold text-gray-800">
-          MTL Coaching Dashboard
+          Calorie Tracker
         </div>
-
-        <!-- Right: welcome + logout -->
+        <!-- Welcome + Logout -->
         <div class="flex items-center space-x-4">
-
-          <!-- Welcome, <username> -->
           <span class="text-gray-600">
-            Welcome,
-            <span sec:authentication="name">Coach</span>
+            Welcome, <span th:text="${#authentication.name}">Coach</span>
           </span>
-
-          <!-- Logout button -->
           <form th:action="@{/logout}" method="post" class="inline">
             <input type="hidden"
                    th:name="${_csrf.parameterName}"
                    th:value="${_csrf.token}" />
-            <button
-              type="submit"
-              class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm"
-            >
+            <button type="submit"
+                    class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">
               Logout
             </button>
           </form>
@@ -46,19 +37,103 @@
     </div>
   </nav>
 
-  <!-- PAGE CONTENT -->
+  <!-- MAIN CONTENT -->
   <main class="flex-grow container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-semibold text-gray-800 mb-6"
-        th:text="${message}">
-      Welcome to the Calorie Tracker!
-    </h1>
-    <!-- Dashboard content goes here -->
+    <!-- “Your Mentees” heading -->
+    <h2 class="text-2xl font-semibold text-gray-900 mb-6">
+      Your Mentees
+    </h2>
+
+    <!-- Add New Athlete Form -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+      <form th:action="@{/athletes}" th:object="${newAthlete}" method="post" class="space-y-4">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Name</label>
+          <input type="text"
+                 th:field="*{name}"
+                 required
+                 class="mt-1 block w-full px-3 py-2 border rounded-md
+                        border-gray-300 placeholder-gray-400 focus:outline-none
+                        focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+          <input type="number" step="0.1"
+                 th:field="*{weight}"
+                 required
+                 class="mt-1 block w-full px-3 py-2 border rounded-md
+                        border-gray-300 focus:outline-none
+                        focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Size (m)</label>
+          <input type="number" step="0.01"
+                 th:field="*{size}"
+                 required
+                 class="mt-1 block w-full px-3 py-2 border rounded-md
+                        border-gray-300 focus:outline-none
+                        focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+        </div>
+        <div>
+          <button type="submit"
+                  class="w-full flex justify-center py-2 px-4 border border-transparent
+                         rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600
+                         hover:bg-indigo-700 focus:outline-none focus:ring-2
+                         focus:ring-offset-2 focus:ring-indigo-500">
+            Add Mentee
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Athletes Table -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+            <th class="px-6 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr th:each="athlete : ${athletes}">
+            <td class="px-6 py-4 whitespace-nowrap" th:text="${athlete.name}">Athlete Name</td>
+            <td class="px-6 py-4 whitespace-nowrap" th:text="${athlete.weight}">0.0</td>
+            <td class="px-6 py-4 whitespace-nowrap" th:text="${athlete.size}">0.00</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+              <a th:href="@{'/athletes/' + ${athlete.id} + '/edit'}"
+                 class="text-indigo-600 hover:text-indigo-900">Edit</a>
+              <form th:action="@{'/athletes/' + ${athlete.id} + '/delete'}"
+                    method="post" class="inline">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}" />
+                <button type="submit"
+                        class="text-red-600 hover:text-red-900"
+                        onclick="return confirm('Delete this mentee?');">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(athletes)}">
+            <td colspan="4" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+              No mentees found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </main>
 
   <!-- FOOTER -->
-  <footer class="py-4 text-center text-gray-500 text-sm bg-white">
+  <footer class="py-4 text-center text-gray-500 text-sm">
     © Mathieu Delehaye 2025
   </footer>
-
 </body>
 </html>

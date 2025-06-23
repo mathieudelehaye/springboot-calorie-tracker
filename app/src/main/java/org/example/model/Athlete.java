@@ -11,10 +11,16 @@ public class Athlete extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+    @Column(nullable = false)
+    private double weight;
 
     @Column(nullable = false)
+    private double size;
+
+    @Column(nullable = true)  // Make email optional
+    private String email;
+
+    @Column(nullable = true)  // Make phone optional
     private String phone;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,34 +32,66 @@ public class Athlete extends BaseEntity {
 
     public Athlete() {}
 
-    public Athlete(String name, String email, String phone, Coach coach) {
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.coach = coach;
+    public Athlete(String name, double weight, double size, Coach coach) {
+        this.name   = name;
+        this.weight = weight;
+        this.size   = size;
+        this.coach  = coach;
     }
 
     // --- Getters & setters ---
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public double getWeight() {
+        return weight;
+    }
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public double getSize() {
+        return size;
+    }
+    public void setSize(double size) {
+        this.size = size;
+    }
 
-    public Coach getCoach() { return coach; }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Coach getCoach() {
+        return coach;
+    }
     public void setCoach(Coach coach) {
         this.coach = coach;
         if (coach != null && !coach.getAthletes().contains(this)) {
-            coach.addAthlete(this);
+            coach.getAthletes().add(this);
         }
     }
 
-    public List<Day> getDays() { return days; }
-    public void setDays(List<Day> days) { this.days = days; }
+    public List<Day> getDays() {
+        return days;
+    }
+    public void setDays(List<Day> days) {
+        this.days = days;
+    }
 
     // --- Relationship helper methods ---
 
