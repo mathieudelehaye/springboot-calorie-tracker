@@ -176,7 +176,7 @@
     </div>
 
     <!-- Meal Management Modal -->
-    <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white p-6 rounded-lg shadow" style="display: none;">
+    <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white p-6 rounded-lg shadow mb-8" style="display: none;">
       <div class="mb-6">
         <h3 class="text-xl font-medium text-gray-900">
           <span id="selectedDayName">Day</span> Meals
@@ -193,6 +193,37 @@
       <!-- Meal Content -->
       <div id="mealContent">
         <!-- Meal content will be dynamically added here -->
+      </div>
+    </div>
+
+    <!-- Food Management Modal -->
+    <div th:if="${selectedAthlete != null}" id="foodManagementModal" class="bg-white p-6 rounded-lg shadow mb-8" style="display: none;">
+      <div class="mb-6">
+        <h3 class="text-xl font-medium text-gray-900">
+          <span id="selectedMealName">Meal</span> Foods
+        </h3>
+      </div>
+
+      <!-- Food Items Table -->
+      <div class="food-table-container">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Food Item
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantity
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="foodTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- Food items will be dynamically added here -->
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -717,9 +748,6 @@
         addFoodBtn.addEventListener('click', () => {
           addFoodForMeal(mealDbId);
         });
-
-        // Load existing foods for this meal
-        loadExistingFoodsForMeal(mealDbId);
       }
 
       function createMealContent(mealTabId, mealName, mealDbId, dayId) {
@@ -739,28 +767,6 @@
               <button class="add-food-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2" data-meal-id="${mealDbId}">
                 Add Food
               </button>
-            </div>
-            
-            <!-- Food Items Table -->
-            <div class="food-table-container">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Food Item
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Quantity
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="food-table-body bg-white divide-y divide-gray-200" data-meal-id="${mealDbId}">
-                  <!-- Food items will be dynamically added here -->
-                </tbody>
-              </table>
             </div>
           </div>
         `;
@@ -782,6 +788,9 @@
           activeMealTab.element.className = 'whitespace-nowrap py-2 px-1 border-b-2 border-orange-500 text-orange-600 font-medium text-sm focus:outline-none';
           activeMealTab.contentElement.classList.remove('hidden');
           dayMealTabs.activeTab = mealTabId;
+          
+          // Show food modal if this meal has foods
+          showFoodManagementModal(activeMealTab.dbId, activeMealTab.name);
         }
       }
 
@@ -916,55 +925,68 @@
           });
       }
 
-      // === FOOD MANAGEMENT FUNCTIONS ===
+      // === FOOD MODAL MANAGEMENT FUNCTIONS ===
 
-      let foodCounter = 0;
+      let currentFoodMealId = null;
 
-      function addFoodForMeal(mealId) {
-        foodCounter++;
-        const foodName = `Food item ${foodCounter}`;
-        createFoodInDatabase(mealId, foodName, 1);
+      function showFoodManagementModal(mealId, mealName) {
+        // Check if there are any foods for this meal before showing modal
+        fetch(`/api/meals/${mealId}/foods`)
+          .then(response => response.json())
+          .then(foods => {
+            console.log(`Checking foods for meal ${mealName} (ID: ${mealId}):`, foods);
+            if (foods && foods.length > 0) {
+              // Only show modal if foods exist
+              currentFoodMealId = mealId;
+              const modal = document.getElementById('foodManagementModal');
+              const mealNameSpan = document.getElementById('selectedMealName');
+              
+              mealNameSpan.textContent = mealName;
+              modal.style.display = 'block';
+              
+              // Load the existing foods
+              loadFoodsIntoFoodModal(foods);
+            } else {
+              // No foods exist, hide the modal
+              console.log('No foods found for meal:', mealName);
+              currentFoodMealId = null;
+              hideFoodManagementModal();
+            }
+          })
+          .catch(error => {
+            console.error('Error checking foods for meal:', error);
+            currentFoodMealId = null;
+            hideFoodManagementModal();
+          });
       }
 
-      function createFoodInDatabase(mealId, foodName, quantity) {
-        const requestData = {
-          mealId: mealId,
-          foodName: foodName,
-          quantity: quantity
-        };
+      function hideFoodManagementModal() {
+        const modal = document.getElementById('foodManagementModal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+        currentFoodMealId = null;
+        clearFoodModalContent();
+      }
 
-        console.log('Creating food with data:', requestData);
+      function clearFoodModalContent() {
+        const foodTableBody = document.getElementById('foodTableBody');
+        if (foodTableBody) {
+          foodTableBody.innerHTML = '';
+        }
+      }
 
-        fetch('/api/foods', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            [csrfHeader]: csrfToken
-          },
-          body: JSON.stringify(requestData)
-        })
-        .then(response => {
-          console.log('Food response status:', response.status);
-          return response.json();
-        })
-        .then(data => {
-          console.log('Food response data:', data);
-          if (data.error) {
-            alert(data.error);
-          } else {
-            addFoodToTable(data.mealId, data.id, data.name, data.quantity);
-          }
-        })
-        .catch(error => {
-          console.error('Error creating food:', error);
-          alert('Error creating food: ' + error.message);
+      function loadFoodsIntoFoodModal(foods) {
+        clearFoodModalContent();
+        foods.forEach(food => {
+          addFoodToFoodModal(food.id, food.name, food.quantity);
         });
       }
 
-      function addFoodToTable(mealId, foodId, foodName, quantity) {
-        const tableBody = document.querySelector(`[data-meal-id="${mealId}"].food-table-body`);
+      function addFoodToFoodModal(foodId, foodName, quantity) {
+        const tableBody = document.getElementById('foodTableBody');
         if (!tableBody) {
-          console.error('Table body not found for meal:', mealId);
+          console.error('Food table body not found');
           return;
         }
 
@@ -1000,8 +1022,87 @@
         removeBtn.addEventListener('click', () => {
           deleteFoodFromDatabase(foodId);
           row.remove();
+          // Check if this was the last food and hide modal if so
+          if (tableBody.children.length === 0) {
+            hideFoodManagementModal();
+          }
         });
       }
+
+      // === FOOD MANAGEMENT FUNCTIONS ===
+
+      let foodCounter = 0;
+
+      function addFoodForMeal(mealId) {
+        // Check which meal tab is currently active to get the meal name
+        let currentMealName = 'Meal';
+        if (currentMealDayId && mealTabs[currentMealDayId]) {
+          const activeMealTab = mealTabs[currentMealDayId].tabs.find(tab => 
+            tab.dbId === mealId
+          );
+          if (activeMealTab) {
+            currentMealName = activeMealTab.name;
+          }
+        }
+        
+        foodCounter++;
+        const foodName = `Food item ${foodCounter}`;
+        createFoodInDatabase(mealId, foodName, 1, currentMealName);
+      }
+
+      function createFoodInDatabase(mealId, foodName, quantity, mealName) {
+        const requestData = {
+          mealId: mealId,
+          foodName: foodName,
+          quantity: quantity
+        };
+
+        console.log('Creating food with data:', requestData);
+
+        fetch('/api/foods', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(response => {
+          console.log('Food response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Food response data:', data);
+          if (data.error) {
+            alert(data.error);
+          } else {
+            const modal = document.getElementById('foodManagementModal');
+            
+            // Check if food modal is already showing for this meal
+            if (modal.style.display === 'block' && currentFoodMealId === data.mealId) {
+              // Modal is already showing, just add the new food to existing ones
+              addFoodToFoodModal(data.id, data.name, data.quantity);
+            } else {
+              // Modal is not showing or showing different meal, show it with the new food
+              currentFoodMealId = data.mealId;
+              const mealNameSpan = document.getElementById('selectedMealName');
+              
+              mealNameSpan.textContent = mealName || 'Meal';
+              modal.style.display = 'block';
+              
+              // Clear and add the new food
+              clearFoodModalContent();
+              addFoodToFoodModal(data.id, data.name, data.quantity);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error creating food:', error);
+          alert('Error creating food: ' + error.message);
+        });
+      }
+
+
 
       function updateFoodQuantity(foodId, newQuantity) {
         const requestData = {
@@ -1054,8 +1155,8 @@
           .then(foods => {
             console.log('Found foods for meal', mealId, ':', foods);
             foods.forEach(food => {
-              console.log('Adding food to table:', food);
-              addFoodToTable(mealId, food.id, food.name, food.quantity);
+              console.log('Adding food to modal:', food);
+              addFoodToFoodModal(food.id, food.name, food.quantity);
               // Update food counter to avoid naming conflicts
               const match = food.name.match(/Food item (\d+)/);
               if (match) {
