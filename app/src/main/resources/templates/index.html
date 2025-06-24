@@ -152,8 +152,8 @@
       </div>
     </div>
 
-    <!-- Diet Tracking for selected athlete -->
-    <div th:if="${selectedAthlete != null}" class="bg-white p-6 rounded-lg shadow">
+    <!-- Day Management Modal -->
+    <div th:if="${selectedAthlete != null}" class="bg-white p-6 rounded-lg shadow mb-8">
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-medium text-gray-900">My Diet Tracking</h3>
         <button id="addDayBtn" 
@@ -172,6 +172,37 @@
       <!-- Day Content -->
       <div id="dayContent">
         <!-- Day content will be dynamically added here -->
+      </div>
+    </div>
+
+    <!-- Meal Management Modal -->
+    <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white p-6 rounded-lg shadow" style="display: none;">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-medium text-gray-900">
+          <span id="selectedDayName">Day</span> Meals
+        </h3>
+        <div class="flex space-x-2">
+          <button id="addMealBtn" 
+                  class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+            Add Meal
+          </button>
+          <button id="closeMealModalBtn" 
+                  class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <!-- Meal Tabs -->
+      <div id="mealTabs" class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8" id="mealTabsNav">
+          <!-- Meal tabs will be dynamically added here -->
+        </nav>
+      </div>
+
+      <!-- Meal Content -->
+      <div id="mealContent">
+        <!-- Meal content will be dynamically added here -->
       </div>
     </div>
 
@@ -206,6 +237,20 @@
         if (selectedAthleteId) {
           loadExistingDays();
         }
+      });
+
+      // Add Meal button functionality (in meal modal)
+      document.getElementById('addMealBtn').addEventListener('click', function() {
+        if (currentMealDayId) {
+          addMealForDay(currentMealDayId);
+        } else {
+          alert('No day selected');
+        }
+      });
+
+      // Close Meal Modal button functionality
+      document.getElementById('closeMealModalBtn').addEventListener('click', function() {
+        hideMealManagementModal();
       });
 
       // Add Day button functionality
@@ -413,11 +458,7 @@
           removeDayTab(tabId);
         });
 
-        // Add meal button handler
-        const addMealBtn = tabContent.querySelector('.add-meal-btn');
-        addMealBtn.addEventListener('click', () => {
-          addMealForDay(dbId, tabContent);
-        });
+
       }
 
       function createDayContent(tabId, dayName) {
@@ -431,29 +472,6 @@
               <button class="remove-day-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                 Remove
               </button>
-            </div>
-            
-            <div>
-              <button class="add-meal-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-                Add Meal
-              </button>
-            </div>
-            
-            <!-- Meal Management Section -->
-            <div class="meal-section mt-6">
-              <div class="meal-tabs-container" style="display: none;">
-                <!-- Meal Tabs -->
-                <div class="border-b border-gray-200 mb-4">
-                  <nav class="-mb-px flex space-x-8 meal-tabs-nav">
-                    <!-- Meal tabs will be dynamically added here -->
-                  </nav>
-                </div>
-                
-                <!-- Meal Content -->
-                <div class="meal-content">
-                  <!-- Meal content will be dynamically added here -->
-                </div>
-              </div>
             </div>
           </div>
         `;
@@ -473,11 +491,8 @@
           activeTabObj.contentElement.classList.remove('hidden');
           activeTab = tabId;
           
-          // Load existing meals for this day if not already loaded
-          const dayId = activeTabObj.dbId;
-          if (!mealTabs[dayId] || mealTabs[dayId].tabs.length === 0) {
-            loadExistingMealsForDay(dayId, activeTabObj.contentElement);
-          }
+          // Show meal management modal for this day
+          showMealManagementModal(activeTabObj.dbId, activeTabObj.name);
         }
       }
 
@@ -500,13 +515,68 @@
             activateTab(dayTabs[0].id);
           } else {
             activeTab = null;
+            hideMealManagementModal();
           }
         }
       }
 
       // === MEAL MANAGEMENT FUNCTIONS ===
 
-      function addMealForDay(dayId, dayContent) {
+      let currentMealDayId = null;
+
+      function showMealManagementModal(dayId, dayName) {
+        // Always clear any existing modal content first
+        hideMealManagementModal();
+        
+        // First check if there are any meals for this day
+        fetch(`/api/days/${dayId}/meals`)
+          .then(response => response.json())
+          .then(meals => {
+            console.log(`Checking meals for day ${dayName} (ID: ${dayId}):`, meals);
+            if (meals && meals.length > 0) {
+              // Only show modal if meals exist
+              currentMealDayId = dayId;
+              const modal = document.getElementById('mealManagementModal');
+              const dayNameSpan = document.getElementById('selectedDayName');
+              
+              dayNameSpan.textContent = dayName;
+              modal.style.display = 'block';
+              
+              // Load the existing meals
+              loadExistingMealsForMealModal(dayId, meals);
+            } else {
+              // No meals exist, don't show the modal
+              console.log('No meals found for day:', dayName);
+              currentMealDayId = null;
+            }
+          })
+          .catch(error => {
+            console.error('Error checking meals for day:', error);
+            currentMealDayId = null;
+          });
+      }
+
+      function hideMealManagementModal() {
+        const modal = document.getElementById('mealManagementModal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+        currentMealDayId = null;
+        
+        // Clear meal tabs from DOM
+        const mealTabsNav = document.getElementById('mealTabsNav');
+        const mealContent = document.getElementById('mealContent');
+        if (mealTabsNav) mealTabsNav.innerHTML = '';
+        if (mealContent) mealContent.innerHTML = '';
+        
+        // Clear meal tabs data for all days
+        Object.keys(mealTabs).forEach(key => {
+          mealTabs[key].tabs = [];
+          mealTabs[key].activeTab = null;
+        });
+      }
+
+      function addMealForDay(dayId) {
         // Initialize meal tabs for this day if not exists
         if (!mealTabs[dayId]) {
           mealTabs[dayId] = { tabs: [], activeTab: null };
@@ -528,10 +598,10 @@
           }
         }
 
-        createMealInDatabase(dayId, nextMeal, dayContent);
+        createMealInDatabase(dayId, nextMeal);
       }
 
-      function createMealInDatabase(dayId, mealName, dayContent) {
+      function createMealInDatabase(dayId, mealName) {
         const requestData = {
           dayId: dayId,
           mealName: mealName
@@ -556,7 +626,7 @@
           if (data.error) {
             alert(data.error);
           } else {
-            addMealTabFromDB(data.dayId, data.id, data.name, dayContent, true);
+            addMealTabFromDB(data.dayId, data.id, data.name, true);
           }
         })
         .catch(error => {
@@ -565,7 +635,7 @@
         });
       }
 
-      function addMealTabFromDB(dayId, mealDbId, mealName, dayContent, activate = false) {
+      function addMealTabFromDB(dayId, mealDbId, mealName, activate = false) {
         // Initialize meal tabs for this day if not exists
         if (!mealTabs[dayId]) {
           mealTabs[dayId] = { tabs: [], activeTab: null };
@@ -583,12 +653,6 @@
           contentElement: null
         };
 
-        // Show meal container if this is the first meal
-        const mealContainer = dayContent.querySelector('.meal-tabs-container');
-        if (dayMealTabs.tabs.length === 0) {
-          mealContainer.style.display = 'block';
-        }
-
         // Create meal tab button
         const mealTabButton = document.createElement('button');
         mealTabButton.className = 'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none';
@@ -601,9 +665,9 @@
         mealTabContent.setAttribute('data-meal-tab-content', mealTabId);
         mealTabContent.innerHTML = createMealContent(mealTabId, mealName, mealDbId, dayId);
 
-        // Add to DOM
-        const mealTabsNav = dayContent.querySelector('.meal-tabs-nav');
-        const mealContent = dayContent.querySelector('.meal-content');
+        // Add to DOM - use the meal modal elements
+        const mealTabsNav = document.getElementById('mealTabsNav');
+        const mealContent = document.getElementById('mealContent');
         mealTabsNav.appendChild(mealTabButton);
         mealContent.appendChild(mealTabContent);
 
@@ -746,15 +810,58 @@
         // Remove from array
         dayMealTabs.tabs.splice(mealTabIndex, 1);
 
-        // Hide meal container if no meals left
-        if (dayMealTabs.tabs.length === 0) {
-          const dayContent = document.querySelector(`[data-tab-content="tab-${dayId}"]`);
-          const mealContainer = dayContent.querySelector('.meal-tabs-container');
-          mealContainer.style.display = 'none';
-          dayMealTabs.activeTab = null;
-        } else if (dayMealTabs.activeTab === mealTabId) {
-          // If this was the active tab, activate another one
+        // If this was the active tab and there are other tabs, activate another one
+        if (dayMealTabs.activeTab === mealTabId && dayMealTabs.tabs.length > 0) {
           activateMealTab(dayId, dayMealTabs.tabs[0].id);
+        } else if (dayMealTabs.tabs.length === 0) {
+          dayMealTabs.activeTab = null;
+        }
+      }
+
+      function loadExistingMealsForMealModal(dayId, meals = null) {
+        console.log('Loading existing meals for day:', dayId);
+        
+        // Clear existing meal tabs from DOM
+        const mealTabsNav = document.getElementById('mealTabsNav');
+        const mealContent = document.getElementById('mealContent');
+        mealTabsNav.innerHTML = '';
+        mealContent.innerHTML = '';
+        
+        // Reset meal tabs data for ALL days to prevent cross-contamination
+        Object.keys(mealTabs).forEach(key => {
+          mealTabs[key].tabs = [];
+          mealTabs[key].activeTab = null;
+        });
+        
+        // Initialize fresh meal tabs data for this specific day
+        if (!mealTabs[dayId]) {
+          mealTabs[dayId] = { tabs: [], activeTab: null };
+        } else {
+          mealTabs[dayId].tabs = [];
+          mealTabs[dayId].activeTab = null;
+        }
+        
+        if (meals) {
+          // Use provided meals data
+          console.log('Found meals for day', dayId, ':', meals);
+          meals.forEach((meal, index) => {
+            console.log('Adding meal tab:', meal);
+            addMealTabFromDB(dayId, meal.id, meal.name, index === 0);
+          });
+        } else {
+          // Fetch meals from API (fallback)
+          fetch(`/api/days/${dayId}/meals`)
+            .then(response => response.json())
+            .then(meals => {
+              console.log('Found meals for day', dayId, ':', meals);
+              meals.forEach((meal, index) => {
+                console.log('Adding meal tab:', meal);
+                addMealTabFromDB(dayId, meal.id, meal.name, index === 0);
+              });
+            })
+            .catch(error => {
+              console.error('Error loading meals:', error);
+            });
         }
       }
 
@@ -766,7 +873,7 @@
             console.log('Found meals for day', dayId, ':', meals);
             meals.forEach((meal, index) => {
               console.log('Adding meal tab:', meal);
-              addMealTabFromDB(dayId, meal.id, meal.name, dayContent, index === 0);
+              addMealTabFromDB(dayId, meal.id, meal.name, index === 0);
             });
           })
           .catch(error => {
