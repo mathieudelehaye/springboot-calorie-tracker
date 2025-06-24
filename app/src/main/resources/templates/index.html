@@ -177,14 +177,10 @@
 
     <!-- Meal Management Modal -->
     <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white p-6 rounded-lg shadow" style="display: none;">
-      <div class="flex justify-between items-center mb-6">
+      <div class="mb-6">
         <h3 class="text-xl font-medium text-gray-900">
           <span id="selectedDayName">Day</span> Meals
         </h3>
-        <button id="addMealBtn" 
-                class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-          Add Meal
-        </button>
       </div>
 
       <!-- Meal Tabs -->
@@ -230,15 +226,6 @@
         console.log('Selected athlete ID:', selectedAthleteId); // Debug log
         if (selectedAthleteId) {
           loadExistingDays();
-        }
-      });
-
-      // Add Meal button functionality (in meal modal)
-      document.getElementById('addMealBtn').addEventListener('click', function() {
-        if (currentMealDayId) {
-          addMealForDay(currentMealDayId);
-        } else {
-          alert('No day selected');
         }
       });
 
@@ -447,19 +434,30 @@
           removeDayTab(tabId);
         });
 
+        // Add meal button handler
+        const addMealBtn = tabContent.querySelector('.add-meal-for-day-btn');
+        addMealBtn.addEventListener('click', () => {
+          addMealForDay(dbId);
+        });
+
 
       }
 
       function createDayContent(tabId, dayName) {
         return `
           <div class="space-y-4">
-            <div class="flex items-center space-x-4">
-              <label class="text-sm font-medium text-gray-700">Day:</label>
-              <select class="day-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                ${dayOptions.map(day => `<option value="${day}" ${day === dayName ? 'selected' : ''}>${day}</option>`).join('')}
-              </select>
-              <button class="remove-day-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                Remove
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <label class="text-sm font-medium text-gray-700">Day:</label>
+                <select class="day-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                  ${dayOptions.map(day => `<option value="${day}" ${day === dayName ? 'selected' : ''}>${day}</option>`).join('')}
+                </select>
+                <button class="remove-day-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                  Remove
+                </button>
+              </div>
+              <button class="add-meal-for-day-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                Add Meal
               </button>
             </div>
           </div>
@@ -620,20 +618,18 @@
           if (data.error) {
             alert(data.error);
           } else {
-            // Always show the meal modal after creating a meal
             const dayData = dayTabs.find(d => d.dbId === data.dayId);
             if (dayData) {
-              // Clear modal content and show the modal with the new meal
-              clearMealModalContent();
-              currentMealDayId = data.dayId;
               const modal = document.getElementById('mealManagementModal');
-              const dayNameSpan = document.getElementById('selectedDayName');
               
-              dayNameSpan.textContent = dayData.name;
-              modal.style.display = 'block';
-              
-              // Add the new meal tab
-              addMealTabFromDB(data.dayId, data.id, data.name, true);
+              // Check if modal is already showing for this day
+              if (modal.style.display === 'block' && currentMealDayId === data.dayId) {
+                // Modal is already showing, just add the new meal tab to existing ones
+                addMealTabFromDB(data.dayId, data.id, data.name, true);
+              } else {
+                // Modal is not showing or showing different day, reload all meals
+                showMealManagementModal(data.dayId, dayData.name);
+              }
             }
           }
         })
