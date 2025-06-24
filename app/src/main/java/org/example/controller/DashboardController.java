@@ -398,4 +398,145 @@ public class DashboardController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    // === REST API endpoints for food management ===
+
+    /**
+     * Create a new food for a meal
+     */
+    @PostMapping("/api/foods")
+    @ResponseBody
+    public ResponseEntity<?> createFood(@RequestBody Map<String, Object> payload, Principal principal) {
+        try {
+            Object mealIdObj = payload.get("mealId");
+            Object foodNameObj = payload.get("foodName");
+            Object quantityObj = payload.get("quantity");
+            
+            if (mealIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "mealId is required"));
+            }
+            if (foodNameObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "foodName is required"));
+            }
+            
+            Long mealId = Long.valueOf(mealIdObj.toString());
+            String foodName = foodNameObj.toString();
+            int quantity = quantityObj != null ? Integer.valueOf(quantityObj.toString()) : 1;
+
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Meal meal = mealRepo.findById(mealId)
+                    .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+            // For now, create a default food category if none exists
+            FoodCategory defaultCategory = foodCategoryRepo.findByName("Default")
+                    .orElseGet(() -> {
+                        FoodCategory newCategory = new FoodCategory();
+                        newCategory.setName("Default");
+                        return foodCategoryRepo.save(newCategory);
+                    });
+
+            Food food = new Food();
+            food.setMeal(meal);
+            food.setName(foodName);
+            food.setQuantity(quantity);
+            food.setKcal(100); // Default kcal value
+            food.setCategory(defaultCategory);
+            
+            Food savedFood = foodRepo.save(food);
+            
+            return ResponseEntity.ok(Map.of(
+                "id", savedFood.getId(),
+                "name", savedFood.getName(),
+                "quantity", savedFood.getQuantity(),
+                "kcal", savedFood.getKcal(),
+                "mealId", savedFood.getMeal().getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update a food's quantity
+     */
+    @PutMapping("/api/foods/{foodId}")
+    @ResponseBody
+    public ResponseEntity<?> updateFood(@PathVariable Long foodId, @RequestBody Map<String, Object> payload, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Food food = foodRepo.findById(foodId)
+                    .filter(f -> f.getMeal().getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Food not found"));
+
+            if (payload.containsKey("quantity")) {
+                int newQuantity = Integer.valueOf(payload.get("quantity").toString());
+                food.setQuantity(newQuantity);
+            }
+
+            Food savedFood = foodRepo.save(food);
+            
+            return ResponseEntity.ok(Map.of(
+                "id", savedFood.getId(),
+                "name", savedFood.getName(),
+                "quantity", savedFood.getQuantity(),
+                "kcal", savedFood.getKcal(),
+                "mealId", savedFood.getMeal().getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete a food
+     */
+    @DeleteMapping("/api/foods/{foodId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteFood(@PathVariable Long foodId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Food food = foodRepo.findById(foodId)
+                    .filter(f -> f.getMeal().getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Food not found"));
+
+            foodRepo.delete(food);
+            
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get foods for a meal
+     */
+    @GetMapping("/api/meals/{mealId}/foods")
+    @ResponseBody
+    public ResponseEntity<?> getMealFoods(@PathVariable Long mealId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Meal meal = mealRepo.findById(mealId)
+                    .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+            List<Food> foods = foodRepo.findByMealOrderByIdAsc(meal);
+            
+            List<Map<String, Object>> foodData = foods.stream()
+                    .map(food -> {
+                        Map<String, Object> foodMap = new HashMap<>();
+                        foodMap.put("id", food.getId());
+                        foodMap.put("name", food.getName());
+                        foodMap.put("quantity", food.getQuantity());
+                        foodMap.put("kcal", food.getKcal());
+                        foodMap.put("mealId", food.getMeal().getId());
+                        return foodMap;
+                    })
+                    .toList();
+            
+            return ResponseEntity.ok(foodData);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 } 

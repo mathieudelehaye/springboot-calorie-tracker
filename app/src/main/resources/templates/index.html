@@ -181,16 +181,10 @@
         <h3 class="text-xl font-medium text-gray-900">
           <span id="selectedDayName">Day</span> Meals
         </h3>
-        <div class="flex space-x-2">
-          <button id="addMealBtn" 
-                  class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-            Add Meal
-          </button>
-          <button id="closeMealModalBtn" 
-                  class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-            Close
-          </button>
-        </div>
+        <button id="addMealBtn" 
+                class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+          Add Meal
+        </button>
       </div>
 
       <!-- Meal Tabs -->
@@ -246,11 +240,6 @@
         } else {
           alert('No day selected');
         }
-      });
-
-      // Close Meal Modal button functionality
-      document.getElementById('closeMealModalBtn').addEventListener('click', function() {
-        hideMealManagementModal();
       });
 
       // Add Day button functionality
@@ -526,9 +515,9 @@
 
       function showMealManagementModal(dayId, dayName) {
         // Always clear any existing modal content first
-        hideMealManagementModal();
+        clearMealModalContent();
         
-        // First check if there are any meals for this day
+        // Check if there are any meals for this day before showing modal
         fetch(`/api/days/${dayId}/meals`)
           .then(response => response.json())
           .then(meals => {
@@ -545,24 +534,20 @@
               // Load the existing meals
               loadExistingMealsForMealModal(dayId, meals);
             } else {
-              // No meals exist, don't show the modal
+              // No meals exist, hide the modal
               console.log('No meals found for day:', dayName);
               currentMealDayId = null;
+              hideMealManagementModal();
             }
           })
           .catch(error => {
             console.error('Error checking meals for day:', error);
             currentMealDayId = null;
+            hideMealManagementModal();
           });
       }
 
-      function hideMealManagementModal() {
-        const modal = document.getElementById('mealManagementModal');
-        if (modal) {
-          modal.style.display = 'none';
-        }
-        currentMealDayId = null;
-        
+      function clearMealModalContent() {
         // Clear meal tabs from DOM
         const mealTabsNav = document.getElementById('mealTabsNav');
         const mealContent = document.getElementById('mealContent');
@@ -574,6 +559,15 @@
           mealTabs[key].tabs = [];
           mealTabs[key].activeTab = null;
         });
+      }
+
+      function hideMealManagementModal() {
+        const modal = document.getElementById('mealManagementModal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+        currentMealDayId = null;
+        clearMealModalContent();
       }
 
       function addMealForDay(dayId) {
@@ -626,7 +620,21 @@
           if (data.error) {
             alert(data.error);
           } else {
-            addMealTabFromDB(data.dayId, data.id, data.name, true);
+            // Always show the meal modal after creating a meal
+            const dayData = dayTabs.find(d => d.dbId === data.dayId);
+            if (dayData) {
+              // Clear modal content and show the modal with the new meal
+              clearMealModalContent();
+              currentMealDayId = data.dayId;
+              const modal = document.getElementById('mealManagementModal');
+              const dayNameSpan = document.getElementById('selectedDayName');
+              
+              dayNameSpan.textContent = dayData.name;
+              modal.style.display = 'block';
+              
+              // Add the new meal tab
+              addMealTabFromDB(data.dayId, data.id, data.name, true);
+            }
           }
         })
         .catch(error => {
@@ -707,25 +715,56 @@
           deleteMealFromDatabase(mealDbId);
           removeMealTab(dayId, mealTabId);
         });
+
+        // Add food button handler
+        const addFoodBtn = mealTabContent.querySelector('.add-food-btn');
+        addFoodBtn.addEventListener('click', () => {
+          addFoodForMeal(mealDbId);
+        });
+
+        // Load existing foods for this meal
+        loadExistingFoodsForMeal(mealDbId);
       }
 
       function createMealContent(mealTabId, mealName, mealDbId, dayId) {
         return `
           <div class="space-y-4">
-            <div class="flex items-center space-x-4">
-              <label class="text-sm font-medium text-gray-700">Meal:</label>
-              <select class="meal-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                ${mealOptions.map(meal => `<option value="${meal}" ${meal === mealName ? 'selected' : ''}>${meal}</option>`).join('')}
-              </select>
-              <button class="remove-meal-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                Remove
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <label class="text-sm font-medium text-gray-700">Meal:</label>
+                <select class="meal-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                  ${mealOptions.map(meal => `<option value="${meal}" ${meal === mealName ? 'selected' : ''}>${meal}</option>`).join('')}
+                </select>
+                <button class="remove-meal-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                  Remove
+                </button>
+              </div>
+              
+              <button class="add-food-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2" data-meal-id="${mealDbId}">
+                Add Food
               </button>
             </div>
             
-            <div>
-              <button class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-                Add Food
-              </button>
+            <!-- Food Items Table -->
+            <div class="food-table-container">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Food Item
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Quantity
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="food-table-body bg-white divide-y divide-gray-200" data-meal-id="${mealDbId}">
+                  <!-- Food items will be dynamically added here -->
+                </tbody>
+              </table>
             </div>
           </div>
         `;
@@ -878,6 +917,158 @@
           })
           .catch(error => {
             console.error('Error loading meals:', error);
+          });
+      }
+
+      // === FOOD MANAGEMENT FUNCTIONS ===
+
+      let foodCounter = 0;
+
+      function addFoodForMeal(mealId) {
+        foodCounter++;
+        const foodName = `Food item ${foodCounter}`;
+        createFoodInDatabase(mealId, foodName, 1);
+      }
+
+      function createFoodInDatabase(mealId, foodName, quantity) {
+        const requestData = {
+          mealId: mealId,
+          foodName: foodName,
+          quantity: quantity
+        };
+
+        console.log('Creating food with data:', requestData);
+
+        fetch('/api/foods', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(response => {
+          console.log('Food response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Food response data:', data);
+          if (data.error) {
+            alert(data.error);
+          } else {
+            addFoodToTable(data.mealId, data.id, data.name, data.quantity);
+          }
+        })
+        .catch(error => {
+          console.error('Error creating food:', error);
+          alert('Error creating food: ' + error.message);
+        });
+      }
+
+      function addFoodToTable(mealId, foodId, foodName, quantity) {
+        const tableBody = document.querySelector(`[data-meal-id="${mealId}"].food-table-body`);
+        if (!tableBody) {
+          console.error('Table body not found for meal:', mealId);
+          return;
+        }
+
+        const row = document.createElement('tr');
+        row.setAttribute('data-food-id', foodId);
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            ${foodName}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <input type="number" 
+                   class="quantity-input w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" 
+                   value="${quantity}" 
+                   min="1" 
+                   data-food-id="${foodId}">
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <button class="remove-food-btn text-red-600 hover:text-red-900 focus:outline-none" data-food-id="${foodId}">
+              Remove
+            </button>
+          </td>
+        `;
+
+        tableBody.appendChild(row);
+
+        // Add event listeners
+        const quantityInput = row.querySelector('.quantity-input');
+        quantityInput.addEventListener('change', function() {
+          updateFoodQuantity(foodId, this.value);
+        });
+
+        const removeBtn = row.querySelector('.remove-food-btn');
+        removeBtn.addEventListener('click', () => {
+          deleteFoodFromDatabase(foodId);
+          row.remove();
+        });
+      }
+
+      function updateFoodQuantity(foodId, newQuantity) {
+        const requestData = {
+          quantity: parseInt(newQuantity)
+        };
+
+        fetch(`/api/foods/${foodId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error updating food quantity:', error);
+          alert('Error updating food quantity');
+        });
+      }
+
+      function deleteFoodFromDatabase(foodId) {
+        fetch(`/api/foods/${foodId}`, {
+          method: 'DELETE',
+          headers: {
+            [csrfHeader]: csrfToken
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting food:', error);
+          alert('Error deleting food');
+        });
+      }
+
+      function loadExistingFoodsForMeal(mealId) {
+        console.log('Loading existing foods for meal:', mealId);
+        fetch(`/api/meals/${mealId}/foods`)
+          .then(response => response.json())
+          .then(foods => {
+            console.log('Found foods for meal', mealId, ':', foods);
+            foods.forEach(food => {
+              console.log('Adding food to table:', food);
+              addFoodToTable(mealId, food.id, food.name, food.quantity);
+              // Update food counter to avoid naming conflicts
+              const match = food.name.match(/Food item (\d+)/);
+              if (match) {
+                foodCounter = Math.max(foodCounter, parseInt(match[1]));
+              }
+            });
+          })
+          .catch(error => {
+            console.error('Error loading foods:', error);
           });
       }
     </script>

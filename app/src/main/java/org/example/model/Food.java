@@ -13,6 +13,9 @@ public class Food extends BaseEntity {
     @Column(name = "kcal", nullable = false)
     private int kcal;
 
+    @Column(nullable = false)
+    private int quantity = 1;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
@@ -26,6 +29,15 @@ public class Food extends BaseEntity {
     public Food(String name, int kcal, Meal meal, FoodCategory category) {
         this.name = name;
         this.kcal = kcal;
+        this.quantity = 1;
+        setMeal(meal);
+        setCategory(category);
+    }
+
+    public Food(String name, int kcal, int quantity, Meal meal, FoodCategory category) {
+        this.name = name;
+        this.kcal = kcal;
+        this.quantity = quantity;
         setMeal(meal);
         setCategory(category);
     }
@@ -37,6 +49,9 @@ public class Food extends BaseEntity {
 
     public int getKcal() { return kcal; }
     public void setKcal(int kcal) { this.kcal = kcal; }
+
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
     public Meal getMeal() { return meal; }
     public void setMeal(Meal meal) {
