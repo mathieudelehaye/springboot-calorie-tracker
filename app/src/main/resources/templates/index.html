@@ -178,8 +178,11 @@
     <script>
       // Available day options
       const dayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Everyday'];
+      // Available meal options
+      const mealOptions = ['Breakfast', 'Lunch', 'Dinner', 'Brunch', 'Tea'];
       let dayTabs = [];
       let activeTab = null;
+      let mealTabs = {};  // Per day meal tabs: { dayId: { tabs: [], activeTab: null } }
       // Get athlete ID from URL or Thymeleaf
       let selectedAthleteId = /*[[${selectedAthlete != null ? selectedAthlete.id : null}]]*/ null;
       
@@ -409,6 +412,12 @@
           deleteDayFromDatabase(dbId);
           removeDayTab(tabId);
         });
+
+        // Add meal button handler
+        const addMealBtn = tabContent.querySelector('.add-meal-btn');
+        addMealBtn.addEventListener('click', () => {
+          addMealForDay(dbId, tabContent);
+        });
       }
 
       function createDayContent(tabId, dayName) {
@@ -425,9 +434,26 @@
             </div>
             
             <div>
-              <button class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+              <button class="add-meal-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
                 Add Meal
               </button>
+            </div>
+            
+            <!-- Meal Management Section -->
+            <div class="meal-section mt-6">
+              <div class="meal-tabs-container" style="display: none;">
+                <!-- Meal Tabs -->
+                <div class="border-b border-gray-200 mb-4">
+                  <nav class="-mb-px flex space-x-8 meal-tabs-nav">
+                    <!-- Meal tabs will be dynamically added here -->
+                  </nav>
+                </div>
+                
+                <!-- Meal Content -->
+                <div class="meal-content">
+                  <!-- Meal content will be dynamically added here -->
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -446,6 +472,12 @@
           activeTabObj.element.className = 'whitespace-nowrap py-2 px-1 border-b-2 border-indigo-500 text-indigo-600 font-medium text-sm focus:outline-none';
           activeTabObj.contentElement.classList.remove('hidden');
           activeTab = tabId;
+          
+          // Load existing meals for this day if not already loaded
+          const dayId = activeTabObj.dbId;
+          if (!mealTabs[dayId] || mealTabs[dayId].tabs.length === 0) {
+            loadExistingMealsForDay(dayId, activeTabObj.contentElement);
+          }
         }
       }
 
@@ -470,6 +502,276 @@
             activeTab = null;
           }
         }
+      }
+
+      // === MEAL MANAGEMENT FUNCTIONS ===
+
+      function addMealForDay(dayId, dayContent) {
+        // Initialize meal tabs for this day if not exists
+        if (!mealTabs[dayId]) {
+          mealTabs[dayId] = { tabs: [], activeTab: null };
+        }
+
+        const dayMealTabs = mealTabs[dayId];
+        
+        if (dayMealTabs.tabs.length >= 5) {
+          alert('Maximum 5 meals allowed per day');
+          return;
+        }
+
+        // Find next available meal
+        let nextMeal = 'Breakfast';
+        for (let meal of mealOptions) {
+          if (!dayMealTabs.tabs.some(tab => tab.name === meal)) {
+            nextMeal = meal;
+            break;
+          }
+        }
+
+        createMealInDatabase(dayId, nextMeal, dayContent);
+      }
+
+      function createMealInDatabase(dayId, mealName, dayContent) {
+        const requestData = {
+          dayId: dayId,
+          mealName: mealName
+        };
+
+        console.log('Creating meal with data:', requestData);
+
+        fetch('/api/meals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(response => {
+          console.log('Meal response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Meal response data:', data);
+          if (data.error) {
+            alert(data.error);
+          } else {
+            addMealTabFromDB(data.dayId, data.id, data.name, dayContent, true);
+          }
+        })
+        .catch(error => {
+          console.error('Error creating meal:', error);
+          alert('Error creating meal: ' + error.message);
+        });
+      }
+
+      function addMealTabFromDB(dayId, mealDbId, mealName, dayContent, activate = false) {
+        // Initialize meal tabs for this day if not exists
+        if (!mealTabs[dayId]) {
+          mealTabs[dayId] = { tabs: [], activeTab: null };
+        }
+
+        const dayMealTabs = mealTabs[dayId];
+        const mealTabId = 'meal-tab-' + mealDbId;
+        
+        const mealTab = {
+          id: mealTabId,
+          dbId: mealDbId,
+          name: mealName,
+          dayId: dayId,
+          element: null,
+          contentElement: null
+        };
+
+        // Show meal container if this is the first meal
+        const mealContainer = dayContent.querySelector('.meal-tabs-container');
+        if (dayMealTabs.tabs.length === 0) {
+          mealContainer.style.display = 'block';
+        }
+
+        // Create meal tab button
+        const mealTabButton = document.createElement('button');
+        mealTabButton.className = 'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none';
+        mealTabButton.setAttribute('data-meal-tab-id', mealTabId);
+        mealTabButton.textContent = mealName;
+
+        // Create meal tab content
+        const mealTabContent = document.createElement('div');
+        mealTabContent.className = activate ? '' : 'hidden';
+        mealTabContent.setAttribute('data-meal-tab-content', mealTabId);
+        mealTabContent.innerHTML = createMealContent(mealTabId, mealName, mealDbId, dayId);
+
+        // Add to DOM
+        const mealTabsNav = dayContent.querySelector('.meal-tabs-nav');
+        const mealContent = dayContent.querySelector('.meal-content');
+        mealTabsNav.appendChild(mealTabButton);
+        mealContent.appendChild(mealTabContent);
+
+        // Store references
+        mealTab.element = mealTabButton;
+        mealTab.contentElement = mealTabContent;
+        dayMealTabs.tabs.push(mealTab);
+
+        // Add click handler
+        mealTabButton.addEventListener('click', () => activateMealTab(dayId, mealTabId));
+
+        // Activate this tab if requested
+        if (activate) {
+          activateMealTab(dayId, mealTabId);
+        }
+
+        // Add meal selector change handler
+        const mealSelect = mealTabContent.querySelector('.meal-selector');
+        mealSelect.addEventListener('change', function() {
+          const newMealName = this.value;
+          // Check if this meal is already used by another tab in this day
+          if (dayMealTabs.tabs.some(t => t.id !== mealTabId && t.name === newMealName)) {
+            alert('This meal is already selected in another tab');
+            this.value = mealTab.name; // Reset to previous value
+            return;
+          }
+          
+          // Update in database
+          updateMealInDatabase(mealDbId, newMealName);
+          mealTab.name = newMealName;
+          mealTabButton.textContent = newMealName;
+        });
+
+        // Add remove button handler
+        const removeMealBtn = mealTabContent.querySelector('.remove-meal-btn');
+        removeMealBtn.addEventListener('click', () => {
+          deleteMealFromDatabase(mealDbId);
+          removeMealTab(dayId, mealTabId);
+        });
+      }
+
+      function createMealContent(mealTabId, mealName, mealDbId, dayId) {
+        return `
+          <div class="space-y-4">
+            <div class="flex items-center space-x-4">
+              <label class="text-sm font-medium text-gray-700">Meal:</label>
+              <select class="meal-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                ${mealOptions.map(meal => `<option value="${meal}" ${meal === mealName ? 'selected' : ''}>${meal}</option>`).join('')}
+              </select>
+              <button class="remove-meal-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                Remove
+              </button>
+            </div>
+            
+            <div>
+              <button class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                Add Food
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      function activateMealTab(dayId, mealTabId) {
+        const dayMealTabs = mealTabs[dayId];
+        if (!dayMealTabs) return;
+
+        // Deactivate all meal tabs for this day
+        dayMealTabs.tabs.forEach(tab => {
+          tab.element.className = 'whitespace-nowrap py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm focus:outline-none';
+          tab.contentElement.classList.add('hidden');
+        });
+
+        // Activate selected meal tab
+        const activeMealTab = dayMealTabs.tabs.find(tab => tab.id === mealTabId);
+        if (activeMealTab) {
+          activeMealTab.element.className = 'whitespace-nowrap py-2 px-1 border-b-2 border-orange-500 text-orange-600 font-medium text-sm focus:outline-none';
+          activeMealTab.contentElement.classList.remove('hidden');
+          dayMealTabs.activeTab = mealTabId;
+        }
+      }
+
+      function updateMealInDatabase(mealId, newMealName) {
+        const requestData = {
+          mealName: newMealName
+        };
+
+        fetch(`/api/meals/${mealId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error updating meal:', error);
+          alert('Error updating meal');
+        });
+      }
+
+      function deleteMealFromDatabase(mealId) {
+        fetch(`/api/meals/${mealId}`, {
+          method: 'DELETE',
+          headers: {
+            [csrfHeader]: csrfToken
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting meal:', error);
+          alert('Error deleting meal');
+        });
+      }
+
+      function removeMealTab(dayId, mealTabId) {
+        const dayMealTabs = mealTabs[dayId];
+        if (!dayMealTabs) return;
+
+        const mealTabIndex = dayMealTabs.tabs.findIndex(tab => tab.id === mealTabId);
+        if (mealTabIndex === -1) return;
+
+        const mealTab = dayMealTabs.tabs[mealTabIndex];
+        
+        // Remove from DOM
+        mealTab.element.remove();
+        mealTab.contentElement.remove();
+        
+        // Remove from array
+        dayMealTabs.tabs.splice(mealTabIndex, 1);
+
+        // Hide meal container if no meals left
+        if (dayMealTabs.tabs.length === 0) {
+          const dayContent = document.querySelector(`[data-tab-content="tab-${dayId}"]`);
+          const mealContainer = dayContent.querySelector('.meal-tabs-container');
+          mealContainer.style.display = 'none';
+          dayMealTabs.activeTab = null;
+        } else if (dayMealTabs.activeTab === mealTabId) {
+          // If this was the active tab, activate another one
+          activateMealTab(dayId, dayMealTabs.tabs[0].id);
+        }
+      }
+
+      function loadExistingMealsForDay(dayId, dayContent) {
+        console.log('Loading existing meals for day:', dayId);
+        fetch(`/api/days/${dayId}/meals`)
+          .then(response => response.json())
+          .then(meals => {
+            console.log('Found meals for day', dayId, ':', meals);
+            meals.forEach((meal, index) => {
+              console.log('Adding meal tab:', meal);
+              addMealTabFromDB(dayId, meal.id, meal.name, dayContent, index === 0);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading meals:', error);
+          });
       }
     </script>
   </main>

@@ -268,4 +268,134 @@ public class DashboardController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    // === REST API endpoints for meal management ===
+
+    /**
+     * Create a new meal for a day
+     */
+    @PostMapping("/api/meals")
+    @ResponseBody
+    public ResponseEntity<?> createMeal(@RequestBody Map<String, Object> payload, Principal principal) {
+        try {
+            Object dayIdObj = payload.get("dayId");
+            Object mealNameObj = payload.get("mealName");
+            
+            if (dayIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "dayId is required"));
+            }
+            if (mealNameObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "mealName is required"));
+            }
+            
+            Long dayId = Long.valueOf(dayIdObj.toString());
+            String mealName = mealNameObj.toString();
+
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Day day = dayRepo.findById(dayId)
+                    .filter(d -> d.getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Day not found"));
+
+            // Check if this meal name already exists for this day
+            if (mealRepo.findByDayAndName(day, mealName).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Meal already exists for this day"));
+            }
+
+            Meal meal = new Meal();
+            meal.setDay(day);
+            meal.setName(mealName);
+            
+            Meal savedMeal = mealRepo.save(meal);
+            
+            return ResponseEntity.ok(Map.of(
+                "id", savedMeal.getId(),
+                "name", savedMeal.getName(),
+                "dayId", savedMeal.getDay().getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update a meal's name
+     */
+    @PutMapping("/api/meals/{mealId}")
+    @ResponseBody
+    public ResponseEntity<?> updateMeal(@PathVariable Long mealId, @RequestBody Map<String, Object> payload, Principal principal) {
+        try {
+            String newMealName = payload.get("mealName").toString();
+
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Meal meal = mealRepo.findById(mealId)
+                    .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+            // Check if this meal name already exists for this day (excluding current meal)
+            if (mealRepo.findByDayAndNameAndIdNot(meal.getDay(), newMealName, mealId).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Meal name already exists for this day"));
+            }
+
+            meal.setName(newMealName);
+            Meal savedMeal = mealRepo.save(meal);
+            
+            return ResponseEntity.ok(Map.of(
+                "id", savedMeal.getId(),
+                "name", savedMeal.getName(),
+                "dayId", savedMeal.getDay().getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete a meal
+     */
+    @DeleteMapping("/api/meals/{mealId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteMeal(@PathVariable Long mealId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Meal meal = mealRepo.findById(mealId)
+                    .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+            mealRepo.delete(meal);
+            
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get meals for a day
+     */
+    @GetMapping("/api/days/{dayId}/meals")
+    @ResponseBody
+    public ResponseEntity<?> getDayMeals(@PathVariable Long dayId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Day day = dayRepo.findById(dayId)
+                    .filter(d -> d.getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Day not found"));
+
+            List<Meal> meals = mealRepo.findByDayOrderByIdAsc(day);
+            
+            List<Map<String, Object>> mealData = meals.stream()
+                    .map(meal -> {
+                        Map<String, Object> mealMap = new HashMap<>();
+                        mealMap.put("id", meal.getId());
+                        mealMap.put("name", meal.getName());
+                        mealMap.put("dayId", meal.getDay().getId());
+                        return mealMap;
+                    })
+                    .toList();
+            
+            return ResponseEntity.ok(mealData);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 } 
