@@ -45,18 +45,42 @@ public class DashboardController {
      */
     @GetMapping("/")
     public String dashboard(
-            @RequestParam(required = false) Long athleteId,
-            Model model, 
-            Principal principal) {
-        
+                    @RequestParam(required = false) Long athleteId,
+        Model model, 
+        Principal principal) {
+
         Coach coach = coachService.loadCoachByUsername(principal.getName());
+        
+        // Load all food categories for dropdown
+        List<FoodCategory> foodCategories = foodCategoryRepo.findAll();
+        model.addAttribute("foodCategories", foodCategories);
+        
+        // Create a simple JSON string for JavaScript (manual serialization)
+        StringBuilder jsonBuilder = new StringBuilder("[");
+        for (int i = 0; i < foodCategories.size(); i++) {
+            FoodCategory category = foodCategories.get(i);
+            jsonBuilder.append("{")
+                    .append("\"id\":").append(category.getId()).append(",")
+                    .append("\"name\":\"").append(category.getName()).append("\",")
+                    .append("\"prot\":").append(category.getProt() != null ? category.getProt() : 0).append(",")
+                    .append("\"kcal\":").append(category.getKcal() != null ? category.getKcal() : 0).append(",")
+                    .append("\"fat\":").append(category.getFat() != null ? category.getFat() : 0).append(",")
+                    .append("\"carb\":").append(category.getCarb() != null ? category.getCarb() : 0)
+                    .append("}");
+            if (i < foodCategories.size() - 1) {
+                jsonBuilder.append(",");
+            }
+        }
+        jsonBuilder.append("]");
+        String foodCategoriesJsonString = jsonBuilder.toString();
+        System.out.println("DEBUG: Food categories JSON string: " + foodCategoriesJsonString);
+        model.addAttribute("foodCategoriesJson", foodCategoriesJsonString);
         
         // Always load all athletes for the coach (for athlete selection dropdown)
         List<Athlete> allAthletes = athleteRepo.findByCoach(coach);
         model.addAttribute("athletes", allAthletes);
         
-        // Load all food categories (global, used for food creation forms)
-        model.addAttribute("foodCategories", foodCategoryRepo.findAll());
+        // Already loaded above - removing duplicate
         
         // Prepare empty objects for forms
         model.addAttribute("newAthlete", new Athlete());
@@ -409,18 +433,14 @@ public class DashboardController {
     public ResponseEntity<?> createFood(@RequestBody Map<String, Object> payload, Principal principal) {
         try {
             Object mealIdObj = payload.get("mealId");
-            Object foodNameObj = payload.get("foodName");
+            Object categoryIdObj = payload.get("categoryId");
             Object quantityObj = payload.get("quantity");
             
             if (mealIdObj == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "mealId is required"));
             }
-            if (foodNameObj == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "foodName is required"));
-            }
             
             Long mealId = Long.valueOf(mealIdObj.toString());
-            String foodName = foodNameObj.toString();
             int quantity = quantityObj != null ? Integer.valueOf(quantityObj.toString()) : 1;
 
             Coach coach = coachService.loadCoachByUsername(principal.getName());
@@ -428,26 +448,35 @@ public class DashboardController {
                     .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
                     .orElseThrow(() -> new RuntimeException("Meal not found"));
 
-            // For now, create a default food category if none exists
-            FoodCategory defaultCategory = foodCategoryRepo.findByName("Default")
-                    .orElseGet(() -> {
-                        FoodCategory newCategory = new FoodCategory("Default", 2.0f, 100.0f, 0.5f, 20.0f);
-                        return foodCategoryRepo.save(newCategory);
-                    });
+            // Get the food category - use provided categoryId or default to first available
+            FoodCategory category;
+            if (categoryIdObj != null) {
+                Long categoryId = Long.valueOf(categoryIdObj.toString());
+                category = foodCategoryRepo.findById(categoryId)
+                        .orElseThrow(() -> new RuntimeException("Food category not found"));
+            } else {
+                // Default to first food category if none specified
+                category = foodCategoryRepo.findAll().stream()
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("No food categories available"));
+            }
 
             Food food = new Food();
             food.setMeal(meal);
-            food.setName(foodName);
             food.setQuantity(quantity);
-            food.setCategory(defaultCategory);
+            food.setCategory(category);
             
             Food savedFood = foodRepo.save(food);
             
+            Float categoryKcal = savedFood.getCategory().getKcal();
+            float kcal = (categoryKcal != null ? categoryKcal : 0.0f) * savedFood.getQuantity();
+            
             return ResponseEntity.ok(Map.of(
                 "id", savedFood.getId(),
-                "name", savedFood.getName(),
+                "categoryId", savedFood.getCategory().getId(),
+                "categoryName", savedFood.getCategory().getName(),
                 "quantity", savedFood.getQuantity(),
-                "kcal", savedFood.getCategory().getKcal() * savedFood.getQuantity(),
+                "kcal", kcal,
                 "mealId", savedFood.getMeal().getId()
             ));
         } catch (Exception e) {
@@ -471,14 +500,25 @@ public class DashboardController {
                 int newQuantity = Integer.valueOf(payload.get("quantity").toString());
                 food.setQuantity(newQuantity);
             }
+            
+            if (payload.containsKey("categoryId")) {
+                Long categoryId = Long.valueOf(payload.get("categoryId").toString());
+                FoodCategory category = foodCategoryRepo.findById(categoryId)
+                        .orElseThrow(() -> new RuntimeException("Food category not found"));
+                food.setCategory(category);
+            }
 
             Food savedFood = foodRepo.save(food);
             
+            Float categoryKcal = savedFood.getCategory().getKcal();
+            float kcal = (categoryKcal != null ? categoryKcal : 0.0f) * savedFood.getQuantity();
+            
             return ResponseEntity.ok(Map.of(
                 "id", savedFood.getId(),
-                "name", savedFood.getName(),
+                "categoryId", savedFood.getCategory().getId(),
+                "categoryName", savedFood.getCategory().getName(),
                 "quantity", savedFood.getQuantity(),
-                "kcal", savedFood.getCategory().getKcal() * savedFood.getQuantity(),
+                "kcal", kcal,
                 "mealId", savedFood.getMeal().getId()
             ));
         } catch (Exception e) {
@@ -524,15 +564,45 @@ public class DashboardController {
                     .map(food -> {
                         Map<String, Object> foodMap = new HashMap<>();
                         foodMap.put("id", food.getId());
-                        foodMap.put("name", food.getName());
+                        foodMap.put("categoryId", food.getCategory().getId());
+                        foodMap.put("categoryName", food.getCategory().getName());
                         foodMap.put("quantity", food.getQuantity());
-                        foodMap.put("kcal", food.getCategory().getKcal() * food.getQuantity());
+                        Float categoryKcal = food.getCategory().getKcal();
+                        float kcal = (categoryKcal != null ? categoryKcal : 0.0f) * food.getQuantity();
+                        foodMap.put("kcal", kcal);
                         foodMap.put("mealId", food.getMeal().getId());
                         return foodMap;
                     })
                     .toList();
             
             return ResponseEntity.ok(foodData);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all food categories for debugging
+     */
+    @GetMapping("/api/food-categories")
+    @ResponseBody
+    public ResponseEntity<?> getFoodCategories(Principal principal) {
+        try {
+            List<FoodCategory> categories = foodCategoryRepo.findAll();
+            List<Map<String, Object>> categoryData = categories.stream()
+                    .map(category -> {
+                        Map<String, Object> categoryMap = new HashMap<>();
+                        categoryMap.put("id", category.getId());
+                        categoryMap.put("name", category.getName());
+                        categoryMap.put("prot", category.getProt());
+                        categoryMap.put("kcal", category.getKcal());
+                        categoryMap.put("fat", category.getFat());
+                        categoryMap.put("carb", category.getCarb());
+                        return categoryMap;
+                    })
+                    .toList();
+            
+            return ResponseEntity.ok(categoryData);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

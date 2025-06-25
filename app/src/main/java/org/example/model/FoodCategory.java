@@ -12,16 +12,16 @@ public class FoodCategory extends BaseEntity {
     private String name;
 
     @Column(nullable = true)
-    private float prot;
+    private Float prot;
 
     @Column(nullable = true)
-    private float kcal;
+    private Float kcal;
 
     @Column(nullable = true)
-    private float fat;
+    private Float fat;
 
     @Column(nullable = true)
-    private float carb;
+    private Float carb;
 
     // One category has many foods
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -34,7 +34,7 @@ public class FoodCategory extends BaseEntity {
         this.name = name;
     }
 
-    public FoodCategory(String name, float prot, float kcal, float fat, float carb) {
+    public FoodCategory(String name, Float prot, Float kcal, Float fat, Float carb) {
         this.name = name;
         this.prot = prot;
         this.kcal = kcal;
@@ -51,35 +51,35 @@ public class FoodCategory extends BaseEntity {
         this.name = name;
     }
 
-    public float getProt() {
+    public Float getProt() {
         return prot;
     }
 
-    public void setProt(float prot) {
+    public void setProt(Float prot) {
         this.prot = prot;
     }
 
-    public float getKcal() {
+    public Float getKcal() {
         return kcal;
     }
 
-    public void setKcal(float kcal) {
+    public void setKcal(Float kcal) {
         this.kcal = kcal;
     }
 
-    public float getFat() {
+    public Float getFat() {
         return fat;
     }
 
-    public void setFat(float fat) {
+    public void setFat(Float fat) {
         this.fat = fat;
     }
 
-    public float getCarb() {
+    public Float getCarb() {
         return carb;
     }
 
-    public void setCarb(float carb) {
+    public void setCarb(Float carb) {
         this.carb = carb;
     }
 

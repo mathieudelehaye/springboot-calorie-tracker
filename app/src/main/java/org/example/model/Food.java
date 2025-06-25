@@ -8,9 +8,6 @@ import java.util.Objects;
 public class Food extends BaseEntity {
 
     @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false)
     private int quantity = 1;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -23,24 +20,19 @@ public class Food extends BaseEntity {
 
     public Food() { }
 
-    public Food(String name, Meal meal, FoodCategory category) {
-        this.name = name;
+    public Food(Meal meal, FoodCategory category) {
         this.quantity = 1;
         setMeal(meal);
         setCategory(category);
     }
 
-    public Food(String name, int quantity, Meal meal, FoodCategory category) {
-        this.name = name;
+    public Food(int quantity, Meal meal, FoodCategory category) {
         this.quantity = quantity;
         setMeal(meal);
         setCategory(category);
     }
 
     // --- Getters & Setters ---
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
@@ -66,12 +58,12 @@ public class Food extends BaseEntity {
         if (this == o) return true;
         if (!(o instanceof Food)) return false;
         Food food = (Food) o;
-        return name.equals(food.name) &&
+        return Objects.equals(category, food.category) &&
                Objects.equals(meal, food.meal);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, meal);
+        return Objects.hash(category, meal);
     }
 }

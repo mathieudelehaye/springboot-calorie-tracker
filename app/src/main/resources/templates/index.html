@@ -232,6 +232,8 @@
       const dayOptions = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Everyday'];
       // Available meal options
       const mealOptions = ['Breakfast', 'Lunch', 'Dinner', 'Brunch', 'Tea'];
+      // Food categories loaded from backend
+      let foodCategories = [];
       let dayTabs = [];
       let activeTab = null;
       let mealTabs = {};  // Per day meal tabs: { dayId: { tabs: [], activeTab: null } }
@@ -255,6 +257,7 @@
       // Initialize when page loads
       document.addEventListener('DOMContentLoaded', function() {
         console.log('Selected athlete ID:', selectedAthleteId); // Debug log
+        console.log('Food categories loaded:', foodCategories); // Debug log
         if (selectedAthleteId) {
           loadExistingDays();
         }
@@ -979,22 +982,32 @@
       function loadFoodsIntoFoodModal(foods) {
         clearFoodModalContent();
         foods.forEach(food => {
-          addFoodToFoodModal(food.id, food.name, food.quantity);
+          addFoodToFoodModal(food.id, food.categoryId, food.categoryName, food.quantity);
         });
       }
 
-      function addFoodToFoodModal(foodId, foodName, quantity) {
+      function addFoodToFoodModal(foodId, categoryId, categoryName, quantity) {
         const tableBody = document.getElementById('foodTableBody');
         if (!tableBody) {
           console.error('Food table body not found');
           return;
         }
 
+        // Create food category dropdown options
+        let categoryOptions = '';
+        foodCategories.forEach(category => {
+          const selected = category.id === categoryId ? 'selected' : '';
+          categoryOptions += `<option value="${category.id}" ${selected}>${category.name}</option>`;
+        });
+
         const row = document.createElement('tr');
         row.setAttribute('data-food-id', foodId);
         row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-            ${foodName}
+          <td class="px-6 py-4 whitespace-nowrap">
+            <select class="category-select w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" 
+                    data-food-id="${foodId}">
+              ${categoryOptions}
+            </select>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <input type="number" 
@@ -1013,6 +1026,11 @@
         tableBody.appendChild(row);
 
         // Add event listeners
+        const categorySelect = row.querySelector('.category-select');
+        categorySelect.addEventListener('change', function() {
+          updateFoodCategory(foodId, this.value);
+        });
+
         const quantityInput = row.querySelector('.quantity-input');
         quantityInput.addEventListener('change', function() {
           updateFoodQuantity(foodId, this.value);
@@ -1031,8 +1049,6 @@
 
       // === FOOD MANAGEMENT FUNCTIONS ===
 
-      let foodCounter = 0;
-
       function addFoodForMeal(mealId) {
         // Check which meal tab is currently active to get the meal name
         let currentMealName = 'Meal';
@@ -1045,15 +1061,19 @@
           }
         }
         
-        foodCounter++;
-        const foodName = `Food item ${foodCounter}`;
-        createFoodInDatabase(mealId, foodName, 1, currentMealName);
+        // Use first food category as default
+        const defaultCategoryId = foodCategories.length > 0 ? foodCategories[0].id : null;
+        if (!defaultCategoryId) {
+          alert('No food categories available. Please add food categories first.');
+          return;
+        }
+        createFoodInDatabase(mealId, defaultCategoryId, 1, currentMealName);
       }
 
-      function createFoodInDatabase(mealId, foodName, quantity, mealName) {
+      function createFoodInDatabase(mealId, categoryId, quantity, mealName) {
         const requestData = {
           mealId: mealId,
-          foodName: foodName,
+          categoryId: categoryId,
           quantity: quantity
         };
 
@@ -1081,7 +1101,7 @@
             // Check if food modal is already showing for this meal
             if (modal.style.display === 'block' && currentFoodMealId === data.mealId) {
               // Modal is already showing, just add the new food to existing ones
-              addFoodToFoodModal(data.id, data.name, data.quantity);
+              addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity);
             } else {
               // Modal is not showing or showing different meal, show it with the new food
               currentFoodMealId = data.mealId;
@@ -1092,7 +1112,7 @@
               
               // Clear and add the new food
               clearFoodModalContent();
-              addFoodToFoodModal(data.id, data.name, data.quantity);
+              addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity);
             }
           }
         })
@@ -1103,6 +1123,31 @@
       }
 
 
+
+      function updateFoodCategory(foodId, newCategoryId) {
+        const requestData = {
+          categoryId: parseInt(newCategoryId)
+        };
+
+        fetch(`/api/foods/${foodId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error updating food category:', error);
+          alert('Error updating food category');
+        });
+      }
 
       function updateFoodQuantity(foodId, newQuantity) {
         const requestData = {
@@ -1156,18 +1201,18 @@
             console.log('Found foods for meal', mealId, ':', foods);
             foods.forEach(food => {
               console.log('Adding food to modal:', food);
-              addFoodToFoodModal(food.id, food.name, food.quantity);
-              // Update food counter to avoid naming conflicts
-              const match = food.name.match(/Food item (\d+)/);
-              if (match) {
-                foodCounter = Math.max(foodCounter, parseInt(match[1]));
-              }
+              addFoodToFoodModal(food.id, food.categoryId, food.categoryName, food.quantity);
             });
           })
           .catch(error => {
             console.error('Error loading foods:', error);
           });
       }
+    </script>
+    
+    <script th:inline="javascript">
+      // Set food categories from backend
+      foodCategories = /*[(${foodCategoriesJson})]*/[];
     </script>
   </main>
 
