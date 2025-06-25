@@ -11,6 +11,18 @@ public class FoodCategory extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(nullable = true)
+    private float prot;
+
+    @Column(nullable = true)
+    private float kcal;
+
+    @Column(nullable = true)
+    private float fat;
+
+    @Column(nullable = true)
+    private float carb;
+
     // One category has many foods
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Food> foods = new ArrayList<>();
@@ -22,6 +34,14 @@ public class FoodCategory extends BaseEntity {
         this.name = name;
     }
 
+    public FoodCategory(String name, float prot, float kcal, float fat, float carb) {
+        this.name = name;
+        this.prot = prot;
+        this.kcal = kcal;
+        this.fat = fat;
+        this.carb = carb;
+    }
+
     // --- Getters & setters ---
     public String getName() {
         return name;
@@ -29,6 +49,38 @@ public class FoodCategory extends BaseEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public float getProt() {
+        return prot;
+    }
+
+    public void setProt(float prot) {
+        this.prot = prot;
+    }
+
+    public float getKcal() {
+        return kcal;
+    }
+
+    public void setKcal(float kcal) {
+        this.kcal = kcal;
+    }
+
+    public float getFat() {
+        return fat;
+    }
+
+    public void setFat(float fat) {
+        this.fat = fat;
+    }
+
+    public float getCarb() {
+        return carb;
+    }
+
+    public void setCarb(float carb) {
+        this.carb = carb;
     }
 
     public List<Food> getFoods() {

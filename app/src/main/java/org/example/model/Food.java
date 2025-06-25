@@ -10,9 +10,6 @@ public class Food extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "kcal", nullable = false)
-    private int kcal;
-
     @Column(nullable = false)
     private int quantity = 1;
 
@@ -26,17 +23,15 @@ public class Food extends BaseEntity {
 
     public Food() { }
 
-    public Food(String name, int kcal, Meal meal, FoodCategory category) {
+    public Food(String name, Meal meal, FoodCategory category) {
         this.name = name;
-        this.kcal = kcal;
         this.quantity = 1;
         setMeal(meal);
         setCategory(category);
     }
 
-    public Food(String name, int kcal, int quantity, Meal meal, FoodCategory category) {
+    public Food(String name, int quantity, Meal meal, FoodCategory category) {
         this.name = name;
-        this.kcal = kcal;
         this.quantity = quantity;
         setMeal(meal);
         setCategory(category);
@@ -46,9 +41,6 @@ public class Food extends BaseEntity {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
-    public int getKcal() { return kcal; }
-    public void setKcal(int kcal) { this.kcal = kcal; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
@@ -74,13 +66,12 @@ public class Food extends BaseEntity {
         if (this == o) return true;
         if (!(o instanceof Food)) return false;
         Food food = (Food) o;
-        return kcal == food.kcal &&
-               name.equals(food.name) &&
+        return name.equals(food.name) &&
                Objects.equals(meal, food.meal);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, kcal, meal);
+        return Objects.hash(name, meal);
     }
 }

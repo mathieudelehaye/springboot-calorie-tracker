@@ -74,9 +74,9 @@ public class Meal extends BaseEntity {
 
     // Calculate total kcal for this meal
     @Transient
-    public int calculateTotalKcal() {
-        return foods.stream()
-                    .mapToInt(Food::getKcal)
+    public float calculateTotalKcal() {
+        return (float) foods.stream()
+                    .mapToDouble(food -> food.getCategory().getKcal() * food.getQuantity())
                     .sum();
     }
 }

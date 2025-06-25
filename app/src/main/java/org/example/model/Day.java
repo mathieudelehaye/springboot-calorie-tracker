@@ -92,9 +92,9 @@ public class Day extends BaseEntity {
 
     // Optional: calculate total kcal for the day
     @Transient
-    public int calculateTotalKcal() {
-        return meals.stream()
-                    .mapToInt(Meal::calculateTotalKcal)
+    public float calculateTotalKcal() {
+        return (float) meals.stream()
+                    .mapToDouble(meal -> meal.calculateTotalKcal())
                     .sum();
     }
 }

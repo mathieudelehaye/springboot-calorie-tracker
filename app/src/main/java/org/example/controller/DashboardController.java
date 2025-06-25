@@ -431,8 +431,7 @@ public class DashboardController {
             // For now, create a default food category if none exists
             FoodCategory defaultCategory = foodCategoryRepo.findByName("Default")
                     .orElseGet(() -> {
-                        FoodCategory newCategory = new FoodCategory();
-                        newCategory.setName("Default");
+                        FoodCategory newCategory = new FoodCategory("Default", 2.0f, 100.0f, 0.5f, 20.0f);
                         return foodCategoryRepo.save(newCategory);
                     });
 
@@ -440,7 +439,6 @@ public class DashboardController {
             food.setMeal(meal);
             food.setName(foodName);
             food.setQuantity(quantity);
-            food.setKcal(100); // Default kcal value
             food.setCategory(defaultCategory);
             
             Food savedFood = foodRepo.save(food);
@@ -449,7 +447,7 @@ public class DashboardController {
                 "id", savedFood.getId(),
                 "name", savedFood.getName(),
                 "quantity", savedFood.getQuantity(),
-                "kcal", savedFood.getKcal(),
+                "kcal", savedFood.getCategory().getKcal() * savedFood.getQuantity(),
                 "mealId", savedFood.getMeal().getId()
             ));
         } catch (Exception e) {
@@ -480,7 +478,7 @@ public class DashboardController {
                 "id", savedFood.getId(),
                 "name", savedFood.getName(),
                 "quantity", savedFood.getQuantity(),
-                "kcal", savedFood.getKcal(),
+                "kcal", savedFood.getCategory().getKcal() * savedFood.getQuantity(),
                 "mealId", savedFood.getMeal().getId()
             ));
         } catch (Exception e) {
@@ -528,7 +526,7 @@ public class DashboardController {
                         foodMap.put("id", food.getId());
                         foodMap.put("name", food.getName());
                         foodMap.put("quantity", food.getQuantity());
-                        foodMap.put("kcal", food.getKcal());
+                        foodMap.put("kcal", food.getCategory().getKcal() * food.getQuantity());
                         foodMap.put("mealId", food.getMeal().getId());
                         return foodMap;
                     })
