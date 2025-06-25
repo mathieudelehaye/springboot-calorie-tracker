@@ -213,10 +213,10 @@
                 Food Item
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Quantity
+                Quantity (g)
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                Nutritional Info & Actions
               </th>
             </tr>
           </thead>
@@ -982,11 +982,12 @@
       function loadFoodsIntoFoodModal(foods) {
         clearFoodModalContent();
         foods.forEach(food => {
-          addFoodToFoodModal(food.id, food.categoryId, food.categoryName, food.quantity);
+          addFoodToFoodModal(food.id, food.categoryId, food.categoryName, food.quantity, 
+                            food.prot || 0, food.carb || 0, food.fat || 0, food.kcal || 0, food.gTot || 0);
         });
       }
 
-      function addFoodToFoodModal(foodId, categoryId, categoryName, quantity) {
+      function addFoodToFoodModal(foodId, categoryId, categoryName, quantity, prot = 0, carb = 0, fat = 0, kcal = 0, gTot = 0) {
         const tableBody = document.getElementById('foodTableBody');
         if (!tableBody) {
           console.error('Food table body not found');
@@ -1016,14 +1017,22 @@
                    min="1" 
                    data-food-id="${foodId}">
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <button class="remove-food-btn text-red-600 hover:text-red-900 focus:outline-none" data-food-id="${foodId}">
-              Remove
-            </button>
+          <td class="px-6 py-4 whitespace-nowrap text-sm relative">
+            <div class="flex items-center justify-between">
+              <span id="nutrition-${foodId}" class="text-red-600 text-xs font-medium"></span>
+              <button class="remove-food-btn text-red-600 hover:text-red-900 focus:outline-none ml-4 text-lg font-bold" 
+                      data-food-id="${foodId}" 
+                      title="Remove food item">
+                ×
+              </button>
+            </div>
           </td>
         `;
 
         tableBody.appendChild(row);
+
+        // Update nutritional information display
+        updateNutritionalDisplay(foodId, prot, carb, fat, kcal, gTot);
 
         // Add event listeners
         const categorySelect = row.querySelector('.category-select');
@@ -1045,6 +1054,15 @@
             hideFoodManagementModal();
           }
         });
+      }
+
+      // === NUTRITIONAL DISPLAY FUNCTIONS ===
+
+      function updateNutritionalDisplay(foodId, prot, carb, fat, kcal, gTot) {
+        const nutritionSpan = document.getElementById(`nutrition-${foodId}`);
+        if (nutritionSpan) {
+          nutritionSpan.textContent = `g prot: ${prot}, g carb: ${carb}, g fat: ${fat}, g tot: ${gTot}, kcal = ${kcal}`;
+        }
       }
 
       // === FOOD MANAGEMENT FUNCTIONS ===
@@ -1098,22 +1116,24 @@
           } else {
             const modal = document.getElementById('foodManagementModal');
             
-            // Check if food modal is already showing for this meal
-            if (modal.style.display === 'block' && currentFoodMealId === data.mealId) {
-              // Modal is already showing, just add the new food to existing ones
-              addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity);
-            } else {
-              // Modal is not showing or showing different meal, show it with the new food
-              currentFoodMealId = data.mealId;
-              const mealNameSpan = document.getElementById('selectedMealName');
-              
-              mealNameSpan.textContent = mealName || 'Meal';
-              modal.style.display = 'block';
-              
-              // Clear and add the new food
-              clearFoodModalContent();
-              addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity);
-            }
+                          // Check if food modal is already showing for this meal
+              if (modal.style.display === 'block' && currentFoodMealId === data.mealId) {
+                // Modal is already showing, just add the new food to existing ones
+                addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity,
+                                 data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
+              } else {
+                // Modal is not showing or showing different meal, show it with the new food
+                currentFoodMealId = data.mealId;
+                const mealNameSpan = document.getElementById('selectedMealName');
+                
+                mealNameSpan.textContent = mealName || 'Meal';
+                modal.style.display = 'block';
+                
+                // Clear and add the new food
+                clearFoodModalContent();
+                addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity,
+                                 data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
+              }
           }
         })
         .catch(error => {
@@ -1141,6 +1161,9 @@
         .then(data => {
           if (data.error) {
             alert(data.error);
+          } else {
+            // Update nutritional display with new data
+            updateNutritionalDisplay(foodId, data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
           }
         })
         .catch(error => {
@@ -1166,6 +1189,9 @@
         .then(data => {
           if (data.error) {
             alert(data.error);
+          } else {
+            // Update nutritional display with new data
+            updateNutritionalDisplay(foodId, data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
           }
         })
         .catch(error => {

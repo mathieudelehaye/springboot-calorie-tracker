@@ -468,15 +468,26 @@ public class DashboardController {
             
             Food savedFood = foodRepo.save(food);
             
-            Float categoryKcal = savedFood.getCategory().getKcal();
-            float kcal = (categoryKcal != null ? categoryKcal : 0.0f) * savedFood.getQuantity();
+            // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
+            FoodCategory foodCategory = savedFood.getCategory();
+            int foodQuantity = savedFood.getQuantity();
+            
+            float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
+            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
+            float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
+            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+            int gTot = foodQuantity; // Total quantity in grams
             
             return ResponseEntity.ok(Map.of(
                 "id", savedFood.getId(),
                 "categoryId", savedFood.getCategory().getId(),
                 "categoryName", savedFood.getCategory().getName(),
                 "quantity", savedFood.getQuantity(),
-                "kcal", kcal,
+                "prot", Math.round(prot * 10.0f) / 10.0f, // Round to 1 decimal place
+                "carb", Math.round(carb * 10.0f) / 10.0f,
+                "fat", Math.round(fat * 10.0f) / 10.0f,
+                "kcal", Math.round(kcal),
+                "gTot", gTot,
                 "mealId", savedFood.getMeal().getId()
             ));
         } catch (Exception e) {
@@ -510,15 +521,26 @@ public class DashboardController {
 
             Food savedFood = foodRepo.save(food);
             
-            Float categoryKcal = savedFood.getCategory().getKcal();
-            float kcal = (categoryKcal != null ? categoryKcal : 0.0f) * savedFood.getQuantity();
+            // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
+            FoodCategory foodCategory = savedFood.getCategory();
+            int foodQuantity = savedFood.getQuantity();
+            
+            float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
+            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
+            float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
+            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+            int gTot = foodQuantity; // Total quantity in grams
             
             return ResponseEntity.ok(Map.of(
                 "id", savedFood.getId(),
                 "categoryId", savedFood.getCategory().getId(),
                 "categoryName", savedFood.getCategory().getName(),
                 "quantity", savedFood.getQuantity(),
-                "kcal", kcal,
+                "prot", Math.round(prot * 10.0f) / 10.0f, // Round to 1 decimal place
+                "carb", Math.round(carb * 10.0f) / 10.0f,
+                "fat", Math.round(fat * 10.0f) / 10.0f,
+                "kcal", Math.round(kcal),
+                "gTot", gTot,
                 "mealId", savedFood.getMeal().getId()
             ));
         } catch (Exception e) {
@@ -567,9 +589,22 @@ public class DashboardController {
                         foodMap.put("categoryId", food.getCategory().getId());
                         foodMap.put("categoryName", food.getCategory().getName());
                         foodMap.put("quantity", food.getQuantity());
-                        Float categoryKcal = food.getCategory().getKcal();
-                        float kcal = (categoryKcal != null ? categoryKcal : 0.0f) * food.getQuantity();
-                        foodMap.put("kcal", kcal);
+                        
+                        // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
+                        FoodCategory foodCategory = food.getCategory();
+                        int foodQuantity = food.getQuantity();
+                        
+                        float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
+                        float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
+                        float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
+                        float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+                        int gTot = foodQuantity; // Total quantity in grams
+                        
+                        foodMap.put("prot", Math.round(prot * 10.0f) / 10.0f); // Round to 1 decimal place
+                        foodMap.put("carb", Math.round(carb * 10.0f) / 10.0f);
+                        foodMap.put("fat", Math.round(fat * 10.0f) / 10.0f);
+                        foodMap.put("kcal", Math.round(kcal));
+                        foodMap.put("gTot", gTot);
                         foodMap.put("mealId", food.getMeal().getId());
                         return foodMap;
                     })
