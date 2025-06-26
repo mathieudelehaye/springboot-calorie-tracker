@@ -97,4 +97,28 @@ public class Day extends BaseEntity {
                     .mapToDouble(meal -> meal.calculateTotalKcal())
                     .sum();
     }
+
+    // Calculate total protein for the day
+    @Transient
+    public float calculateTotalProtein() {
+        return (float) meals.stream()
+                    .mapToDouble(meal -> meal.calculateTotalProtein())
+                    .sum();
+    }
+
+    // Calculate total carbs for the day
+    @Transient
+    public float calculateTotalCarbs() {
+        return (float) meals.stream()
+                    .mapToDouble(meal -> meal.calculateTotalCarbs())
+                    .sum();
+    }
+
+    // Calculate total fat for the day
+    @Transient
+    public float calculateTotalFat() {
+        return (float) meals.stream()
+                    .mapToDouble(meal -> meal.calculateTotalFat())
+                    .sum();
+    }
 }

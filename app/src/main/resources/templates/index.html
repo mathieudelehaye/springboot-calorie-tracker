@@ -123,8 +123,8 @@
                        th:value="${_csrf.token}" />
                 <button type="submit"
                         class="text-red-600 hover:text-red-900"
-                        onclick="return confirm('Delete this mentee?');">
-                  Delete
+                        onclick="return confirm('Remove this mentee?');">
+                  Remove
                 </button>
               </form>
             </td>
@@ -444,6 +444,8 @@
           activateTab(tabId);
         }
 
+
+
         // Add day selector change handler
         const daySelect = tabContent.querySelector('.day-selector');
         daySelect.addEventListener('change', function() {
@@ -480,16 +482,17 @@
       function createDayContent(tabId, dayName) {
         return `
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-4">
-                <label class="text-sm font-medium text-gray-700">Day:</label>
-                <select class="day-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                  ${dayOptions.map(day => `<option value="${day}" ${day === dayName ? 'selected' : ''}>${day}</option>`).join('')}
-                </select>
-                <button class="remove-day-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                  Remove
-                </button>
-              </div>
+            <div class="flex items-center space-x-4">
+              <label class="text-sm font-medium text-gray-700">Day:</label>
+              <select class="day-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                ${dayOptions.map(day => `<option value="${day}" ${day === dayName ? 'selected' : ''}>${day}</option>`).join('')}
+              </select>
+              <button class="remove-day-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                Remove
+              </button>
+              <span class="day-nutrition-display text-red-600 text-xs font-medium">Loading nutrition...</span>
+            </div>
+            <div class="flex justify-end">
               <button class="add-meal-for-day-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
                 Add Meal
               </button>
@@ -511,6 +514,9 @@
           activeTabObj.element.className = 'whitespace-nowrap py-2 px-1 border-b-2 border-indigo-500 text-indigo-600 font-medium text-sm focus:outline-none';
           activeTabObj.contentElement.classList.remove('hidden');
           activeTab = tabId;
+          
+          // Load nutrition for this day when activated
+          loadDayNutrition(activeTabObj.dbId);
           
           // Show meal management modal for this day
           showMealManagementModal(activeTabObj.dbId, activeTabObj.name);
@@ -722,6 +728,8 @@
           activateMealTab(dayId, mealTabId);
         }
 
+
+
         // Add meal selector change handler
         const mealSelect = mealTabContent.querySelector('.meal-selector');
         mealSelect.addEventListener('change', function() {
@@ -756,17 +764,17 @@
       function createMealContent(mealTabId, mealName, mealDbId, dayId) {
         return `
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-4">
-                <label class="text-sm font-medium text-gray-700">Meal:</label>
-                <select class="meal-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                  ${mealOptions.map(meal => `<option value="${meal}" ${meal === mealName ? 'selected' : ''}>${meal}</option>`).join('')}
-                </select>
-                <button class="remove-meal-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                  Remove
-                </button>
-              </div>
-              
+            <div class="flex items-center space-x-4">
+              <label class="text-sm font-medium text-gray-700">Meal:</label>
+              <select class="meal-selector px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                ${mealOptions.map(meal => `<option value="${meal}" ${meal === mealName ? 'selected' : ''}>${meal}</option>`).join('')}
+              </select>
+              <button class="remove-meal-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                Remove
+              </button>
+              <span class="meal-nutrition-display text-red-600 text-xs font-medium">Loading nutrition...</span>
+            </div>
+            <div class="flex justify-end">
               <button class="add-food-btn px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2" data-meal-id="${mealDbId}">
                 Add Food
               </button>
@@ -791,6 +799,9 @@
           activeMealTab.element.className = 'whitespace-nowrap py-2 px-1 border-b-2 border-orange-500 text-orange-600 font-medium text-sm focus:outline-none';
           activeMealTab.contentElement.classList.remove('hidden');
           dayMealTabs.activeTab = mealTabId;
+          
+          // Load nutrition for this meal when activated
+          loadMealNutrition(activeMealTab.dbId);
           
           // Show food modal if this meal has foods
           showFoodManagementModal(activeMealTab.dbId, activeMealTab.name);
@@ -1047,7 +1058,7 @@
 
         const removeBtn = row.querySelector('.remove-food-btn');
         removeBtn.addEventListener('click', () => {
-          deleteFoodFromDatabase(foodId);
+          deleteFoodFromDatabase(foodId, currentFoodMealId);
           row.remove();
           // Check if this was the last food and hide modal if so
           if (tableBody.children.length === 0) {
@@ -1134,6 +1145,8 @@
                 addFoodToFoodModal(data.id, data.categoryId, data.categoryName, data.quantity,
                                  data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
               }
+              // Refresh nutrition for the meal and day
+              refreshNutritionForMeal(data.mealId);
           }
         })
         .catch(error => {
@@ -1164,6 +1177,8 @@
           } else {
             // Update nutritional display with new data
             updateNutritionalDisplay(foodId, data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
+            // Refresh nutrition for the meal and day
+            refreshNutritionForMeal(data.mealId);
           }
         })
         .catch(error => {
@@ -1192,6 +1207,8 @@
           } else {
             // Update nutritional display with new data
             updateNutritionalDisplay(foodId, data.prot || 0, data.carb || 0, data.fat || 0, data.kcal || 0, data.gTot || 0);
+            // Refresh nutrition for the meal and day
+            refreshNutritionForMeal(data.mealId);
           }
         })
         .catch(error => {
@@ -1200,7 +1217,7 @@
         });
       }
 
-      function deleteFoodFromDatabase(foodId) {
+      function deleteFoodFromDatabase(foodId, mealId = null) {
         fetch(`/api/foods/${foodId}`, {
           method: 'DELETE',
           headers: {
@@ -1211,6 +1228,9 @@
         .then(data => {
           if (data.error) {
             alert(data.error);
+          } else if (mealId) {
+            // Refresh nutrition for the meal and day after deletion
+            refreshNutritionForMeal(mealId);
           }
         })
         .catch(error => {
@@ -1233,6 +1253,95 @@
           .catch(error => {
             console.error('Error loading foods:', error);
           });
+      }
+
+      // === NUTRITION INFORMATION FUNCTIONS ===
+
+      function loadMealNutrition(mealId) {
+        fetch(`/api/meals/${mealId}/nutrition`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              console.error('Error loading meal nutrition:', data.error);
+              return;
+            }
+            updateMealNutritionDisplay(mealId, data.protein, data.carbs, data.fat, data.kcal);
+          })
+          .catch(error => {
+            console.error('Error loading meal nutrition:', error);
+          });
+      }
+
+      function loadDayNutrition(dayId) {
+        fetch(`/api/days/${dayId}/nutrition`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              console.error('Error loading day nutrition:', data.error);
+              return;
+            }
+            updateDayNutritionDisplay(dayId, data.protein, data.carbs, data.fat, data.kcal);
+          })
+          .catch(error => {
+            console.error('Error loading day nutrition:', error);
+          });
+      }
+
+      function updateMealNutritionDisplay(mealId, protein, carbs, fat, kcal) {
+        // Find the active meal tab and update nutrition info in its content
+        Object.values(mealTabs).forEach(dayMealTabs => {
+          dayMealTabs.tabs.forEach(tab => {
+            if (tab.dbId === mealId && !tab.contentElement.classList.contains('hidden')) {
+              const nutritionSpan = tab.contentElement.querySelector('.meal-nutrition-display');
+              if (nutritionSpan) {
+                nutritionSpan.textContent = `g prot: ${protein}, g carb: ${carbs}, g fat: ${fat}, kcal = ${kcal}`;
+              }
+            }
+          });
+        });
+      }
+
+      function updateDayNutritionDisplay(dayId, protein, carbs, fat, kcal) {
+        // Find the active day tab and update nutrition info in its content
+        const dayTab = dayTabs.find(tab => tab.dbId === dayId);
+        if (dayTab && !dayTab.contentElement.classList.contains('hidden')) {
+          const nutritionSpan = dayTab.contentElement.querySelector('.day-nutrition-display');
+          if (nutritionSpan) {
+            nutritionSpan.textContent = `g prot: ${protein}, g carb: ${carbs}, g fat: ${fat}, kcal = ${kcal}`;
+          }
+        }
+      }
+
+      function refreshNutritionForDay(dayId) {
+        // Refresh nutrition for the day itself
+        loadDayNutrition(dayId);
+        
+        // Refresh nutrition for all meals in this day
+        if (mealTabs[dayId]) {
+          mealTabs[dayId].tabs.forEach(mealTab => {
+            loadMealNutrition(mealTab.dbId);
+          });
+        }
+      }
+
+      function refreshAllNutrition() {
+        // Refresh nutrition for all days
+        dayTabs.forEach(dayTab => {
+          refreshNutritionForDay(dayTab.dbId);
+        });
+      }
+
+      function refreshNutritionForMeal(mealId) {
+        // Refresh nutrition for the meal itself
+        loadMealNutrition(mealId);
+        
+        // Find the day this meal belongs to and refresh day nutrition
+        Object.keys(mealTabs).forEach(dayId => {
+          const dayMealTabs = mealTabs[dayId];
+          if (dayMealTabs.tabs.some(tab => tab.dbId === mealId)) {
+            loadDayNutrition(parseInt(dayId));
+          }
+        });
       }
     </script>
     

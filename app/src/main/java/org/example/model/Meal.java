@@ -78,7 +78,40 @@ public class Meal extends BaseEntity {
         return (float) foods.stream()
                     .mapToDouble(food -> {
                         Float categoryKcal = food.getCategory().getKcal();
-                        return (categoryKcal != null ? categoryKcal : 0.0f) * food.getQuantity();
+                        return (categoryKcal != null ? categoryKcal : 0.0f) * food.getQuantity() / 100.0f;
+                    })
+                    .sum();
+    }
+
+    // Calculate total protein for this meal
+    @Transient
+    public float calculateTotalProtein() {
+        return (float) foods.stream()
+                    .mapToDouble(food -> {
+                        Float categoryProt = food.getCategory().getProt();
+                        return (categoryProt != null ? categoryProt : 0.0f) * food.getQuantity() / 100.0f;
+                    })
+                    .sum();
+    }
+
+    // Calculate total carbs for this meal
+    @Transient
+    public float calculateTotalCarbs() {
+        return (float) foods.stream()
+                    .mapToDouble(food -> {
+                        Float categoryCarb = food.getCategory().getCarb();
+                        return (categoryCarb != null ? categoryCarb : 0.0f) * food.getQuantity() / 100.0f;
+                    })
+                    .sum();
+    }
+
+    // Calculate total fat for this meal
+    @Transient
+    public float calculateTotalFat() {
+        return (float) foods.stream()
+                    .mapToDouble(food -> {
+                        Float categoryFat = food.getCategory().getFat();
+                        return (categoryFat != null ? categoryFat : 0.0f) * food.getQuantity() / 100.0f;
                     })
                     .sum();
     }

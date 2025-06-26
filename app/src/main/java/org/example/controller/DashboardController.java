@@ -642,4 +642,54 @@ public class DashboardController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    /**
+     * Get nutrition information for a specific meal
+     */
+    @GetMapping("/api/meals/{mealId}/nutrition")
+    @ResponseBody
+    public ResponseEntity<?> getMealNutrition(@PathVariable Long mealId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Meal meal = mealRepo.findById(mealId)
+                    .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Meal not found"));
+
+            return ResponseEntity.ok(Map.of(
+                "mealId", meal.getId(),
+                "mealName", meal.getName(),
+                "protein", Math.round(meal.calculateTotalProtein() * 10.0f) / 10.0f,
+                "carbs", Math.round(meal.calculateTotalCarbs() * 10.0f) / 10.0f,
+                "fat", Math.round(meal.calculateTotalFat() * 10.0f) / 10.0f,
+                "kcal", Math.round(meal.calculateTotalKcal())
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get nutrition information for a specific day
+     */
+    @GetMapping("/api/days/{dayId}/nutrition")
+    @ResponseBody
+    public ResponseEntity<?> getDayNutrition(@PathVariable Long dayId, Principal principal) {
+        try {
+            Coach coach = coachService.loadCoachByUsername(principal.getName());
+            Day day = dayRepo.findById(dayId)
+                    .filter(d -> d.getAthlete().getCoach().equals(coach))
+                    .orElseThrow(() -> new RuntimeException("Day not found"));
+
+            return ResponseEntity.ok(Map.of(
+                "dayId", day.getId(),
+                "dayName", day.getDayName(),
+                "protein", Math.round(day.calculateTotalProtein() * 10.0f) / 10.0f,
+                "carbs", Math.round(day.calculateTotalCarbs() * 10.0f) / 10.0f,
+                "fat", Math.round(day.calculateTotalFat() * 10.0f) / 10.0f,
+                "kcal", Math.round(day.calculateTotalKcal())
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 } 
