@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <!-- Fragment for meal management section -->
+  <div th:fragment="management">
+    <!-- Meal Management Modal -->
+    <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white p-6 rounded-lg shadow mb-8" style="display: none;">
+      <div class="mb-6">
+        <h3 class="text-xl font-medium text-gray-900">
+          <span id="selectedDayName">Day</span> Meals
+        </h3>
+      </div>
+
+      <!-- Meal Tabs -->
+      <div id="mealTabs" class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8" id="mealTabsNav">
+          <!-- Meal tabs will be dynamically added here -->
+        </nav>
+      </div>
+
+      <!-- Meal Content -->
+      <div id="mealContent">
+        <!-- Meal content will be dynamically added here -->
+      </div>
+    </div>
+  </div>
+</html> 

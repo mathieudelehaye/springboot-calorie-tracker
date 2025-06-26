@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <!-- Fragment for day management section -->
+  <div th:fragment="management">
+    <!-- Day Management Modal -->
+    <div th:if="${selectedAthlete != null}" class="bg-white p-6 rounded-lg shadow mb-8">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-medium text-gray-900">My Diet Tracking</h3>
+        <button id="addDayBtn" 
+                class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+          Add Day
+        </button>
+      </div>
+
+      <!-- Day Tabs -->
+      <div id="dayTabs" class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8" id="dayTabsNav">
+          <!-- Tabs will be dynamically added here -->
+        </nav>
+      </div>
+
+      <!-- Day Content -->
+      <div id="dayContent">
+        <!-- Day content will be dynamically added here -->
+      </div>
+    </div>
+  </div>
+</html> 

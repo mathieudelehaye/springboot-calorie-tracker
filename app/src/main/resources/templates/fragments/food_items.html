@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <!-- Fragment for food items management section -->
+  <div th:fragment="management">
+    <!-- Food Management Modal -->
+    <div th:if="${selectedAthlete != null}" id="foodManagementModal" class="bg-white p-6 rounded-lg shadow mb-8" style="display: none;">
+      <div class="mb-6">
+        <h3 class="text-xl font-medium text-gray-900">
+          <span id="selectedMealName">Meal</span> Foods
+        </h3>
+      </div>
+
+      <!-- Food Items Table -->
+      <div class="food-table-container">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Food Item
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantity (g)
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nutritional Info & Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="foodTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- Food items will be dynamically added here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</html> 
