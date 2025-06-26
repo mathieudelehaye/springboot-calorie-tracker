@@ -80,13 +80,13 @@ function addFoodToFoodModal(foodId, categoryId, categoryName, quantity, prot, ca
 
   row.innerHTML = `
     <td class="px-6 py-4 whitespace-nowrap">
-      <select class="category-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      <select class="category-select w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
         ${categoryOptions}
       </select>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
       <input type="number" 
-             class="quantity-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+             class="quantity-input w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
              value="${quantity}" 
              min="1" 
              step="1">
