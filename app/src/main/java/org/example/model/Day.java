@@ -12,7 +12,7 @@ public class Day extends BaseEntity {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = true)
+    @Column(name = "day_name", nullable = true)
     private String dayName; // Monday, Tuesday, etc.
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -90,35 +90,6 @@ public class Day extends BaseEntity {
         }
     }
 
-    // Optional: calculate total kcal for the day
-    @Transient
-    public float calculateTotalKcal() {
-        return (float) meals.stream()
-                    .mapToDouble(meal -> meal.calculateTotalKcal())
-                    .sum();
-    }
-
-    // Calculate total protein for the day
-    @Transient
-    public float calculateTotalProtein() {
-        return (float) meals.stream()
-                    .mapToDouble(meal -> meal.calculateTotalProtein())
-                    .sum();
-    }
-
-    // Calculate total carbs for the day
-    @Transient
-    public float calculateTotalCarbs() {
-        return (float) meals.stream()
-                    .mapToDouble(meal -> meal.calculateTotalCarbs())
-                    .sum();
-    }
-
-    // Calculate total fat for the day
-    @Transient
-    public float calculateTotalFat() {
-        return (float) meals.stream()
-                    .mapToDouble(meal -> meal.calculateTotalFat())
-                    .sum();
-    }
+    // NOTE: Nutrition calculation methods removed - they're now handled in the controller
+    // with access to the FoodCategoryRepository for cross-database lookups
 }

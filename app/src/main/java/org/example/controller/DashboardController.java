@@ -2,9 +2,11 @@ package org.example.controller;
 
 import org.example.model.*;
 import org.example.repository.*;
+import org.example.repository.foodcategories.FoodCategoryRepository;
 import org.example.service.CoachUserDetailsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -448,28 +450,31 @@ public class DashboardController {
                     .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
                     .orElseThrow(() -> new RuntimeException("Meal not found"));
 
-            // Get the food category - use provided categoryId or default to first available
-            FoodCategory category;
+            // Get the food category ID - use provided categoryId or default to first available
+            Long categoryId;
             if (categoryIdObj != null) {
-                Long categoryId = Long.valueOf(categoryIdObj.toString());
-                category = foodCategoryRepo.findById(categoryId)
+                categoryId = Long.valueOf(categoryIdObj.toString());
+                // Verify category exists in food categories database
+                foodCategoryRepo.findById(categoryId)
                         .orElseThrow(() -> new RuntimeException("Food category not found"));
             } else {
                 // Default to first food category if none specified
-                category = foodCategoryRepo.findAll().stream()
+                FoodCategory firstCategory = foodCategoryRepo.findAll().stream()
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("No food categories available"));
+                categoryId = firstCategory.getId();
             }
 
             Food food = new Food();
             food.setMeal(meal);
             food.setQuantity(quantity);
-            food.setCategory(category);
+            food.setCategoryId(categoryId);
             
             Food savedFood = foodRepo.save(food);
             
-            // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
-            FoodCategory foodCategory = savedFood.getCategory();
+            // Get food category from second database and calculate nutritional values
+            FoodCategory foodCategory = foodCategoryRepo.findById(savedFood.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Food category not found"));
             int foodQuantity = savedFood.getQuantity();
             
             float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
@@ -480,8 +485,8 @@ public class DashboardController {
             
             return ResponseEntity.ok(Map.of(
                 "id", savedFood.getId(),
-                "categoryId", savedFood.getCategory().getId(),
-                "categoryName", savedFood.getCategory().getName(),
+                "categoryId", savedFood.getCategoryId(),
+                "categoryName", foodCategory.getName(),
                 "quantity", savedFood.getQuantity(),
                 "prot", Math.round(prot * 10.0f) / 10.0f, // Round to 1 decimal place
                 "carb", Math.round(carb * 10.0f) / 10.0f,
@@ -500,29 +505,47 @@ public class DashboardController {
      */
     @PutMapping("/api/foods/{foodId}")
     @ResponseBody
+    @Transactional("primaryTransactionManager")
     public ResponseEntity<?> updateFood(@PathVariable Long foodId, @RequestBody Map<String, Object> payload, Principal principal) {
         try {
             Coach coach = coachService.loadCoachByUsername(principal.getName());
-            Food food = foodRepo.findById(foodId)
+            
+            // First verify access rights
+            Food existingFood = foodRepo.findById(foodId)
                     .filter(f -> f.getMeal().getDay().getAthlete().getCoach().equals(coach))
                     .orElseThrow(() -> new RuntimeException("Food not found"));
 
+            // Create updated values but don't modify the loaded entity yet
+            Integer newQuantity = null;
+            Long newCategoryId = null;
+            
             if (payload.containsKey("quantity")) {
-                int newQuantity = Integer.valueOf(payload.get("quantity").toString());
-                food.setQuantity(newQuantity);
+                newQuantity = Integer.valueOf(payload.get("quantity").toString());
             }
             
             if (payload.containsKey("categoryId")) {
-                Long categoryId = Long.valueOf(payload.get("categoryId").toString());
-                FoodCategory category = foodCategoryRepo.findById(categoryId)
+                newCategoryId = Long.valueOf(payload.get("categoryId").toString());
+                // Verify category exists in food categories database
+                foodCategoryRepo.findById(newCategoryId)
                         .orElseThrow(() -> new RuntimeException("Food category not found"));
-                food.setCategory(category);
             }
 
-            Food savedFood = foodRepo.save(food);
+            // Now update only if we have changes
+            if (newQuantity != null || newCategoryId != null) {
+                if (newQuantity != null) {
+                    existingFood.setQuantity(newQuantity);
+                }
+                if (newCategoryId != null) {
+                    existingFood.setCategoryId(newCategoryId);
+                }
+                foodRepo.save(existingFood);
+            }
+
+            Food savedFood = existingFood;
             
-            // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
-            FoodCategory foodCategory = savedFood.getCategory();
+            // Get food category from second database
+            FoodCategory foodCategory = foodCategoryRepo.findById(savedFood.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Food category not found"));
             int foodQuantity = savedFood.getQuantity();
             
             float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
@@ -533,8 +556,8 @@ public class DashboardController {
             
             return ResponseEntity.ok(Map.of(
                 "id", savedFood.getId(),
-                "categoryId", savedFood.getCategory().getId(),
-                "categoryName", savedFood.getCategory().getName(),
+                "categoryId", savedFood.getCategoryId(),
+                "categoryName", foodCategory.getName(),
                 "quantity", savedFood.getQuantity(),
                 "prot", Math.round(prot * 10.0f) / 10.0f, // Round to 1 decimal place
                 "carb", Math.round(carb * 10.0f) / 10.0f,
@@ -586,25 +609,39 @@ public class DashboardController {
                     .map(food -> {
                         Map<String, Object> foodMap = new HashMap<>();
                         foodMap.put("id", food.getId());
-                        foodMap.put("categoryId", food.getCategory().getId());
-                        foodMap.put("categoryName", food.getCategory().getName());
+                        foodMap.put("categoryId", food.getCategoryId());
                         foodMap.put("quantity", food.getQuantity());
                         
-                        // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
-                        FoodCategory foodCategory = food.getCategory();
-                        int foodQuantity = food.getQuantity();
+                        // Get food category from second database
+                        FoodCategory foodCategory = foodCategoryRepo.findById(food.getCategoryId())
+                                .orElse(null);
                         
-                        float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
-                        float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
-                        float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
-                        float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
-                        int gTot = foodQuantity; // Total quantity in grams
+                        if (foodCategory != null) {
+                            foodMap.put("categoryName", foodCategory.getName());
+                            
+                            // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
+                            int foodQuantity = food.getQuantity();
+                            
+                            float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
+                            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
+                            float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
+                            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+                            int gTot = foodQuantity; // Total quantity in grams
+                            
+                            foodMap.put("prot", Math.round(prot * 10.0f) / 10.0f); // Round to 1 decimal place
+                            foodMap.put("carb", Math.round(carb * 10.0f) / 10.0f);
+                            foodMap.put("fat", Math.round(fat * 10.0f) / 10.0f);
+                            foodMap.put("kcal", Math.round(kcal));
+                            foodMap.put("gTot", gTot);
+                        } else {
+                            foodMap.put("categoryName", "Unknown Category");
+                            foodMap.put("prot", 0.0f);
+                            foodMap.put("carb", 0.0f);
+                            foodMap.put("fat", 0.0f);
+                            foodMap.put("kcal", 0);
+                            foodMap.put("gTot", food.getQuantity());
+                        }
                         
-                        foodMap.put("prot", Math.round(prot * 10.0f) / 10.0f); // Round to 1 decimal place
-                        foodMap.put("carb", Math.round(carb * 10.0f) / 10.0f);
-                        foodMap.put("fat", Math.round(fat * 10.0f) / 10.0f);
-                        foodMap.put("kcal", Math.round(kcal));
-                        foodMap.put("gTot", gTot);
                         foodMap.put("mealId", food.getMeal().getId());
                         return foodMap;
                     })
@@ -655,13 +692,32 @@ public class DashboardController {
                     .filter(m -> m.getDay().getAthlete().getCoach().equals(coach))
                     .orElseThrow(() -> new RuntimeException("Meal not found"));
 
+            // Calculate nutrition by fetching food categories from second database
+            List<Food> foods = foodRepo.findByMealOrderByIdAsc(meal);
+            
+            float totalProtein = 0.0f;
+            float totalCarbs = 0.0f;
+            float totalFat = 0.0f;
+            float totalKcal = 0.0f;
+            
+            for (Food food : foods) {
+                FoodCategory category = foodCategoryRepo.findById(food.getCategoryId()).orElse(null);
+                if (category != null) {
+                    int quantity = food.getQuantity();
+                    totalProtein += (category.getProt() != null ? category.getProt() : 0.0f) * quantity / 100.0f;
+                    totalCarbs += (category.getCarb() != null ? category.getCarb() : 0.0f) * quantity / 100.0f;
+                    totalFat += (category.getFat() != null ? category.getFat() : 0.0f) * quantity / 100.0f;
+                    totalKcal += (category.getKcal() != null ? category.getKcal() : 0.0f) * quantity / 100.0f;
+                }
+            }
+
             return ResponseEntity.ok(Map.of(
                 "mealId", meal.getId(),
                 "mealName", meal.getName(),
-                "protein", Math.round(meal.calculateTotalProtein() * 10.0f) / 10.0f,
-                "carbs", Math.round(meal.calculateTotalCarbs() * 10.0f) / 10.0f,
-                "fat", Math.round(meal.calculateTotalFat() * 10.0f) / 10.0f,
-                "kcal", Math.round(meal.calculateTotalKcal())
+                "protein", Math.round(totalProtein * 10.0f) / 10.0f,
+                "carbs", Math.round(totalCarbs * 10.0f) / 10.0f,
+                "fat", Math.round(totalFat * 10.0f) / 10.0f,
+                "kcal", Math.round(totalKcal)
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -680,13 +736,35 @@ public class DashboardController {
                     .filter(d -> d.getAthlete().getCoach().equals(coach))
                     .orElseThrow(() -> new RuntimeException("Day not found"));
 
+            // Calculate nutrition by fetching food categories from second database
+            List<Meal> meals = mealRepo.findByDayOrderByIdAsc(day);
+            
+            float totalProtein = 0.0f;
+            float totalCarbs = 0.0f;
+            float totalFat = 0.0f;
+            float totalKcal = 0.0f;
+            
+            for (Meal meal : meals) {
+                List<Food> foods = foodRepo.findByMealOrderByIdAsc(meal);
+                for (Food food : foods) {
+                    FoodCategory category = foodCategoryRepo.findById(food.getCategoryId()).orElse(null);
+                    if (category != null) {
+                        int quantity = food.getQuantity();
+                        totalProtein += (category.getProt() != null ? category.getProt() : 0.0f) * quantity / 100.0f;
+                        totalCarbs += (category.getCarb() != null ? category.getCarb() : 0.0f) * quantity / 100.0f;
+                        totalFat += (category.getFat() != null ? category.getFat() : 0.0f) * quantity / 100.0f;
+                        totalKcal += (category.getKcal() != null ? category.getKcal() : 0.0f) * quantity / 100.0f;
+                    }
+                }
+            }
+
             return ResponseEntity.ok(Map.of(
                 "dayId", day.getId(),
                 "dayName", day.getDayName(),
-                "protein", Math.round(day.calculateTotalProtein() * 10.0f) / 10.0f,
-                "carbs", Math.round(day.calculateTotalCarbs() * 10.0f) / 10.0f,
-                "fat", Math.round(day.calculateTotalFat() * 10.0f) / 10.0f,
-                "kcal", Math.round(day.calculateTotalKcal())
+                "protein", Math.round(totalProtein * 10.0f) / 10.0f,
+                "carbs", Math.round(totalCarbs * 10.0f) / 10.0f,
+                "fat", Math.round(totalFat * 10.0f) / 10.0f,
+                "kcal", Math.round(totalKcal)
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

@@ -23,9 +23,7 @@ public class FoodCategory extends BaseEntity {
     @Column(nullable = true)
     private Float carb;
 
-    // One category has many foods
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Food> foods = new ArrayList<>();
+    // NOTE: Removed foods relationship since Food and FoodCategory are in different databases
 
     // --- Constructors ---
     public FoodCategory() { }
@@ -83,26 +81,5 @@ public class FoodCategory extends BaseEntity {
         this.carb = carb;
     }
 
-    public List<Food> getFoods() {
-        return foods;
-    }
-
-    public void setFoods(List<Food> foods) {
-        this.foods = foods;
-    }
-
-    // --- Relationship helper methods ---
-    public void addFood(Food food) {
-        foods.add(food);
-        if (food.getCategory() != this) {
-            food.setCategory(this);
-        }
-    }
-
-    public void removeFood(Food food) {
-        foods.remove(food);
-        if (food.getCategory() == this) {
-            food.setCategory(null);
-        }
-    }
+    // NOTE: Removed foods relationship methods since Food and FoodCategory are in different databases
 }

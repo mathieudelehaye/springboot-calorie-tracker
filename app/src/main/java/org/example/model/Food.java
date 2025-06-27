@@ -2,10 +2,15 @@ package org.example.model;
 
 import jakarta.persistence.*;
 import java.util.Objects;
+import java.util.Objects;
 
 @Entity
 @Table(name = "foods")
-public class Food extends BaseEntity {
+public class Food {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private int quantity = 1;
@@ -14,25 +19,32 @@ public class Food extends BaseEntity {
     @JoinColumn(name = "meal_id", nullable = false)
     private Meal meal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private FoodCategory category;
+    @Column(name = "category_id", nullable = false)
+    private Long categoryId;
 
     public Food() { }
 
-    public Food(Meal meal, FoodCategory category) {
+    public Food(Meal meal, Long categoryId) {
         this.quantity = 1;
         setMeal(meal);
-        setCategory(category);
+        setCategoryId(categoryId);
     }
 
-    public Food(int quantity, Meal meal, FoodCategory category) {
+    public Food(int quantity, Meal meal, Long categoryId) {
         this.quantity = quantity;
         setMeal(meal);
-        setCategory(category);
+        setCategoryId(categoryId);
     }
 
     // --- Getters & Setters ---
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
@@ -45,12 +57,9 @@ public class Food extends BaseEntity {
         }
     }
 
-    public FoodCategory getCategory() { return category; }
-    public void setCategory(FoodCategory category) {
-        this.category = category;
-        if (category != null && !category.getFoods().contains(this)) {
-            category.getFoods().add(this);
-        }
+    public Long getCategoryId() { return categoryId; }
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
     }
 
     @Override
@@ -58,12 +67,12 @@ public class Food extends BaseEntity {
         if (this == o) return true;
         if (!(o instanceof Food)) return false;
         Food food = (Food) o;
-        return Objects.equals(category, food.category) &&
+        return Objects.equals(categoryId, food.categoryId) &&
                Objects.equals(meal, food.meal);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(category, meal);
+        return Objects.hash(categoryId, meal);
     }
 }
