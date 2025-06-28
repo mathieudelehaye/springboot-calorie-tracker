@@ -1,6 +1,7 @@
 package org.example.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
@@ -18,15 +19,33 @@ import jakarta.persistence.EntityManagerFactory;
 @EnableTransactionManagement
 public class DatabaseConfig {
 
+    @Value("${spring.datasource.primary.url}")
+    private String primaryDbUrl;
+    
+    @Value("${spring.datasource.primary.username}")
+    private String primaryDbUsername;
+    
+    @Value("${spring.datasource.primary.password}")
+    private String primaryDbPassword;
+    
+    @Value("${spring.datasource.foodcategories.url}")
+    private String foodCategoriesDbUrl;
+    
+    @Value("${spring.datasource.foodcategories.username}")
+    private String foodCategoriesDbUsername;
+    
+    @Value("${spring.datasource.foodcategories.password}")
+    private String foodCategoriesDbPassword;
+
     // Primary DataSource (athletes, coaches, days, foods, meals - NO FOOD CATEGORIES)
     @Primary
     @Bean(name = "primaryDataSource")
     public DataSource primaryDataSource() {
         return DataSourceBuilder.create()
                 .driverClassName("org.postgresql.Driver")
-                .url("jdbc:postgresql://ep-cold-violet-a98cycpm-pooler.gwc.azure.neon.tech/neondb?sslmode=require")
-                .username("neondb_owner")
-                .password("npg_8EdaAKTp9qoP")
+                .url(primaryDbUrl)
+                .username(primaryDbUsername)
+                .password(primaryDbPassword)
                 .build();
     }
 
@@ -63,9 +82,9 @@ public class DatabaseConfig {
     public DataSource foodCategoriesDataSource() {
         return DataSourceBuilder.create()
                 .driverClassName("org.postgresql.Driver")
-                .url("jdbc:postgresql://ep-empty-math-a9w5gft6-pooler.gwc.azure.neon.tech/neondb?sslmode=require")
-                .username("neondb_owner")
-                .password("npg_8EdaAKTp9qoP")
+                .url(foodCategoriesDbUrl)
+                .username(foodCategoriesDbUsername)
+                .password(foodCategoriesDbPassword)
                 .build();
     }
 
