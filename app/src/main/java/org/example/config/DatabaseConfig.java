@@ -24,7 +24,7 @@ public class DatabaseConfig {
     public DataSource primaryDataSource() {
         return DataSourceBuilder.create()
                 .driverClassName("org.postgresql.Driver")
-                .url("jdbc:postgresql://ep-cold-violet-a98cycpm-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require")
+                .url("jdbc:postgresql://ep-cold-violet-a98cycpm-pooler.gwc.azure.neon.tech/neondb?sslmode=require")
                 .username("neondb_owner")
                 .password("npg_8EdaAKTp9qoP")
                 .build();
@@ -39,7 +39,7 @@ public class DatabaseConfig {
         
         java.util.Map<String, Object> properties = new java.util.HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "none");
+        properties.put("hibernate.hbm2ddl.auto", "validate");
         properties.put("hibernate.show_sql", "true");
         
         return builder
@@ -63,7 +63,7 @@ public class DatabaseConfig {
     public DataSource foodCategoriesDataSource() {
         return DataSourceBuilder.create()
                 .driverClassName("org.postgresql.Driver")
-                .url("jdbc:postgresql://ep-empty-math-a9w5gft6-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require")
+                .url("jdbc:postgresql://ep-empty-math-a9w5gft6-pooler.gwc.azure.neon.tech/neondb?sslmode=require")
                 .username("neondb_owner")
                 .password("npg_8EdaAKTp9qoP")
                 .build();
@@ -77,7 +77,7 @@ public class DatabaseConfig {
         
         java.util.Map<String, Object> properties = new java.util.HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "none");
+        properties.put("hibernate.hbm2ddl.auto", "validate");
         properties.put("hibernate.show_sql", "true");
         
         return builder
