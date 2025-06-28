@@ -1,4 +1,4 @@
-package org.example.repository.foodcategories;
+package org.example.repository;
 
 import org.example.model.FoodCategory;
 import org.springframework.data.jpa.repository.JpaRepository;

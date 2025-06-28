@@ -18,7 +18,7 @@ import jakarta.persistence.EntityManagerFactory;
 @EnableTransactionManagement
 public class DatabaseConfig {
 
-    // Primary DataSource (Main App - athletes, coaches, days, foods, meals)
+    // Primary DataSource (All entities in one database for now)
     @Primary
     @Bean(name = "primaryDataSource")
     public DataSource primaryDataSource() {
@@ -30,7 +30,7 @@ public class DatabaseConfig {
                 .build();
     }
 
-    // Primary EntityManagerFactory
+    // Primary EntityManagerFactory - ALL entities
     @Primary
     @Bean(name = "primaryEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
@@ -39,7 +39,7 @@ public class DatabaseConfig {
         
         java.util.Map<String, Object> properties = new java.util.HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "validate");
+        properties.put("hibernate.hbm2ddl.auto", "update");
         properties.put("hibernate.show_sql", "true");
         
         return builder
@@ -55,43 +55,6 @@ public class DatabaseConfig {
     @Bean(name = "primaryTransactionManager")
     public PlatformTransactionManager primaryTransactionManager(
             @Qualifier("primaryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
-        return new JpaTransactionManager(entityManagerFactory);
-    }
-
-    // Food Categories DataSource
-    @Bean(name = "foodCategoriesDataSource")
-    public DataSource foodCategoriesDataSource() {
-        return DataSourceBuilder.create()
-                .driverClassName("org.postgresql.Driver")
-                .url("jdbc:postgresql://ep-empty-math-a9w5gft6-pooler.gwc.azure.neon.tech/neondb?sslmode=require")
-                .username("neondb_owner")
-                .password("npg_8EdaAKTp9qoP")
-                .build();
-    }
-
-    // Food Categories EntityManagerFactory
-    @Bean(name = "foodCategoriesEntityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean foodCategoriesEntityManagerFactory(
-            EntityManagerFactoryBuilder builder,
-            @Qualifier("foodCategoriesDataSource") DataSource dataSource) {
-        
-        java.util.Map<String, Object> properties = new java.util.HashMap<>();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "validate");
-        properties.put("hibernate.show_sql", "true");
-        
-        return builder
-                .dataSource(dataSource)
-                .packages("org.example.model")
-                .persistenceUnit("foodCategories")
-                .properties(properties)
-                .build();
-    }
-
-    // Food Categories TransactionManager
-    @Bean(name = "foodCategoriesTransactionManager")
-    public PlatformTransactionManager foodCategoriesTransactionManager(
-            @Qualifier("foodCategoriesEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
 } 
