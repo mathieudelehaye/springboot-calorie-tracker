@@ -1,12 +1,14 @@
-package org.example.model;
+package org.example.foodcategories;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "food_categories")
-public class FoodCategory extends BaseEntity {
+public class FoodCategory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -22,8 +24,6 @@ public class FoodCategory extends BaseEntity {
 
     @Column(nullable = true)
     private Float carb;
-
-    // NOTE: Removed foods relationship since Food and FoodCategory are in different databases
 
     // --- Constructors ---
     public FoodCategory() { }
@@ -41,6 +41,14 @@ public class FoodCategory extends BaseEntity {
     }
 
     // --- Getters & setters ---
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
@@ -81,5 +89,16 @@ public class FoodCategory extends BaseEntity {
         this.carb = carb;
     }
 
-    // NOTE: Removed foods relationship methods since Food and FoodCategory are in different databases
-}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FoodCategory that = (FoodCategory) o;
+        return id != null ? id.equals(that.id) : that.id == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+} 

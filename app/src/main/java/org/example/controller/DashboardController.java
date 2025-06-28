@@ -2,7 +2,8 @@ package org.example.controller;
 
 import org.example.model.*;
 import org.example.repository.*;
-import org.example.repository.FoodCategoryRepository;
+import org.example.repository.foodcategories.FoodCategoryRepository;
+import org.example.foodcategories.FoodCategory;
 import org.example.service.CoachUserDetailsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

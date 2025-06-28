@@ -12,6 +12,10 @@ import jakarta.persistence.EntityManagerFactory;
     basePackages = {
         "org.example.repository"
     },
+    excludeFilters = @org.springframework.context.annotation.ComponentScan.Filter(
+        type = org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE,
+        classes = {org.example.repository.foodcategories.FoodCategoryRepository.class}
+    ),
     entityManagerFactoryRef = "primaryEntityManagerFactory",
     transactionManagerRef = "primaryTransactionManager"
 )

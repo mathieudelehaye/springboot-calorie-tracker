@@ -1,7 +1,7 @@
 package org.example.config;
 
-import org.example.model.FoodCategory;
-import org.example.repository.FoodCategoryRepository;
+import org.example.foodcategories.FoodCategory;
+import org.example.repository.foodcategories.FoodCategoryRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 

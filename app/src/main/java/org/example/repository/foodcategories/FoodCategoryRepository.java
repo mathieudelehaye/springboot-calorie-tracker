@@ -1,6 +1,6 @@
-package org.example.repository;
+package org.example.repository.foodcategories;
 
-import org.example.model.FoodCategory;
+import org.example.foodcategories.FoodCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
