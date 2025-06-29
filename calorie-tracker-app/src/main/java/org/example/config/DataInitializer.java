@@ -21,9 +21,9 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Initializing food categories...");
             
             // Create the three food categories with nutritional values
-            FoodCategory potato = new FoodCategory("potato", 2.0f, 80.0f, 0.5f, 18.0f);
-            FoodCategory milk = new FoodCategory("milk", 3.2f, 61.0f, 3.3f, 4.8f);
-            FoodCategory beef = new FoodCategory("beef", 26.0f, 260.0f, 10.0f, 0.0f);
+            FoodCategory potato = new FoodCategory("potato", 2.0, 80.0, 0.5, 18.0);
+            FoodCategory milk = new FoodCategory("milk", 3.2, 61.0, 3.3, 4.8);
+            FoodCategory beef = new FoodCategory("beef", 26.0, 260.0, 10.0, 0.0);
             
             foodCategoryRepository.save(potato);
             foodCategoryRepository.save(milk);

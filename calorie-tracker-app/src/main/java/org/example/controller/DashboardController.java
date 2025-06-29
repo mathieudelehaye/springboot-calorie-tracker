@@ -478,10 +478,10 @@ public class DashboardController {
                     .orElseThrow(() -> new RuntimeException("Food category not found"));
             int foodQuantity = savedFood.getQuantity();
             
-            float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
-            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
-            float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
-            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+            float prot = (foodCategory.getProt() != null ? foodCategory.getProt().floatValue() : 0.0f) * foodQuantity / 100.0f;
+            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb().floatValue() : 0.0f) * foodQuantity / 100.0f;
+            float fat = (foodCategory.getFat() != null ? foodCategory.getFat().floatValue() : 0.0f) * foodQuantity / 100.0f;
+            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal().floatValue() : 0.0f) * foodQuantity / 100.0f;
             int gTot = foodQuantity; // Total quantity in grams
             
             return ResponseEntity.ok(Map.of(
@@ -549,10 +549,10 @@ public class DashboardController {
                     .orElseThrow(() -> new RuntimeException("Food category not found"));
             int foodQuantity = savedFood.getQuantity();
             
-            float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
-            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
-            float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
-            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+            float prot = (foodCategory.getProt() != null ? foodCategory.getProt().floatValue() : 0.0f) * foodQuantity / 100.0f;
+            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb().floatValue() : 0.0f) * foodQuantity / 100.0f;
+            float fat = (foodCategory.getFat() != null ? foodCategory.getFat().floatValue() : 0.0f) * foodQuantity / 100.0f;
+            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal().floatValue() : 0.0f) * foodQuantity / 100.0f;
             int gTot = foodQuantity; // Total quantity in grams
             
             return ResponseEntity.ok(Map.of(
@@ -623,10 +623,10 @@ public class DashboardController {
                             // Calculate nutritional values (quantity/100 * nutritional_value_per_100g)
                             int foodQuantity = food.getQuantity();
                             
-                            float prot = (foodCategory.getProt() != null ? foodCategory.getProt() : 0.0f) * foodQuantity / 100.0f;
-                            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb() : 0.0f) * foodQuantity / 100.0f;
-                            float fat = (foodCategory.getFat() != null ? foodCategory.getFat() : 0.0f) * foodQuantity / 100.0f;
-                            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal() : 0.0f) * foodQuantity / 100.0f;
+                            float prot = (foodCategory.getProt() != null ? foodCategory.getProt().floatValue() : 0.0f) * foodQuantity / 100.0f;
+                            float carb = (foodCategory.getCarb() != null ? foodCategory.getCarb().floatValue() : 0.0f) * foodQuantity / 100.0f;
+                            float fat = (foodCategory.getFat() != null ? foodCategory.getFat().floatValue() : 0.0f) * foodQuantity / 100.0f;
+                            float kcal = (foodCategory.getKcal() != null ? foodCategory.getKcal().floatValue() : 0.0f) * foodQuantity / 100.0f;
                             int gTot = foodQuantity; // Total quantity in grams
                             
                             foodMap.put("prot", Math.round(prot * 10.0f) / 10.0f); // Round to 1 decimal place
