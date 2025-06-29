@@ -11,4 +11,7 @@ plugins {
 }
 
 rootProject.name = 'springboot-calorie-tracker'
-include('app')
+
+include 'shared'
+include 'calorie-tracker-app'
+include 'food-categories-admin'
