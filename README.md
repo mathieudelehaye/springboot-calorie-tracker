@@ -124,32 +124,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details. This license ensures that any modifications or derivative works must also be open source and share-alike.
 
-## 🔍 Regarding Terraform Integration
-
-Yes! Terraform would be an excellent addition to the current deployment process. Benefits would include:
-
-1. **Infrastructure as Code (IaC)**
-   - Version-controlled infrastructure
-   - Reproducible environments
-   - Automated provisioning
-
-2. **State Management**
-   - Track infrastructure changes
-   - Prevent configuration drift
-   - Maintain consistency
-
-3. **Integration Points**
-   - Azure Container Apps configuration
-   - Network security rules
-   - Database provisioning
-   - Secret management
-
-4. **Implementation Steps**
-   - Create Terraform configurations for existing infrastructure
-   - Implement state backend (Azure Storage)
-   - Integrate with CI/CD pipeline
-   - Gradually migrate manual configurations
-
 ## 🔍 Quality Assurance
 
 ### Testing Infrastructure
