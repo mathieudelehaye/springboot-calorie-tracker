@@ -3,10 +3,7 @@ package org.example.config;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -19,34 +16,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@EntityScan(basePackages = "org.example.model")
+@EntityScan(basePackages = "org.example.foodcategories")
 @EnableJpaRepositories(
-    basePackages = "org.example.repository",
-    excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = ".*\\.foodcategories\\..*"),
-    entityManagerFactoryRef = "entityManagerFactory",
-    transactionManagerRef = "transactionManager"
+    basePackages = "org.example.repository.foodcategories",
+    entityManagerFactoryRef = "foodCategoriesEntityManagerFactory",
+    transactionManagerRef = "foodCategoriesTransactionManager"
 )
-public class AdminDatabaseConfig {
+public class FoodCategoriesConfig {
 
-    @Primary
     @Bean
-    @ConfigurationProperties("spring.datasource.primary")
-    public DataSourceProperties primaryDataSourceProperties() {
+    @ConfigurationProperties("spring.datasource")
+    public DataSourceProperties foodCategoriesDataSourceProperties() {
         return new DataSourceProperties();
     }
 
-    @Primary
     @Bean
-    public DataSource primaryDataSource() {
-        return primaryDataSourceProperties().initializeDataSourceBuilder().build();
+    public DataSource foodCategoriesDataSource() {
+        return foodCategoriesDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
-    @Primary
-    @Bean(name = "entityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory() {
+    @Bean(name = "foodCategoriesEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean foodCategoriesEntityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(primaryDataSource());
-        em.setPackagesToScan("org.example.model");
+        em.setDataSource(foodCategoriesDataSource());
+        em.setPackagesToScan("org.example.foodcategories");
         
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -59,11 +52,10 @@ public class AdminDatabaseConfig {
         return em;
     }
 
-    @Primary
-    @Bean(name = "transactionManager")
-    public PlatformTransactionManager primaryTransactionManager() {
+    @Bean(name = "foodCategoriesTransactionManager")
+    public PlatformTransactionManager foodCategoriesTransactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(primaryEntityManagerFactory().getObject());
+        transactionManager.setEntityManagerFactory(foodCategoriesEntityManagerFactory().getObject());
         return transactionManager;
     }
 } 

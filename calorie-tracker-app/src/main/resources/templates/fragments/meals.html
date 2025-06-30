@@ -1,25 +1,41 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
   <!-- Fragment for meal management section -->
-  <div th:fragment="management">
-    <!-- Meal Management Modal -->
-    <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white p-6 rounded-lg shadow mb-8" style="display: none;">
-      <div class="mb-6">
-        <h3 class="text-xl font-medium text-gray-900">
-          <span id="selectedDayName">Day</span> Meals
-        </h3>
+  <div th:fragment="management" class="mb-8">
+    <!-- Meal Management Section -->
+    <div th:if="${selectedAthlete != null}" id="mealManagementModal" class="bg-white rounded-xl shadow-lg overflow-hidden" style="display: none;">
+      <div class="bg-teal-600 text-white px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xl font-bold flex items-center">
+              <i class="fas fa-utensils mr-3"></i> <span id="selectedDayName">Day</span> Meals
+            </h3>
+            <p class="text-teal-100 mt-1">Manage breakfast, lunch, dinner and snacks</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button id="addMealBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center">
+              <i class="fas fa-plus mr-2"></i> Add Meal
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Meal Tabs -->
-      <div id="mealTabs" class="border-b border-gray-200 mb-6">
-        <nav class="-mb-px flex space-x-8" id="mealTabsNav">
-          <!-- Meal tabs will be dynamically added here -->
-        </nav>
-      </div>
+      <div class="p-6">
+        <!-- Meal Tabs -->
+        <div id="mealTabs" class="border-b border-gray-200 mb-4">
+          <nav class="-mb-px flex space-x-8 overflow-x-auto" id="mealTabsNav">
+            <!-- Meal tabs will be dynamically added here -->
+          </nav>
+        </div>
 
-      <!-- Meal Content -->
-      <div id="mealContent">
-        <!-- Meal content will be dynamically added here -->
+        <!-- Meal Content -->
+        <div id="mealContent" class="min-h-[100px]">
+          <div class="text-center text-gray-500 py-6">
+            <i class="fas fa-plate-wheat text-4xl mb-2 text-gray-300"></i>
+            <p class="text-base">No meals found for this day</p>
+            <p class="text-sm text-gray-400 mt-1">Add breakfast, lunch, dinner or snacks to get started</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>

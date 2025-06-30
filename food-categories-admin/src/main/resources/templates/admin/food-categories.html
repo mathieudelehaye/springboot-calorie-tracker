@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Header -->
     <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-8 mb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow mb-8">
         <!-- Messages -->
         <div th:if="${successMessage}" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 flex items-center">
             <i class="fas fa-check-circle mr-2"></i>
@@ -190,5 +190,14 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="text-center text-gray-500 text-sm">
+                © Mathieu Delehaye 2025 - Food Categories Management
+            </div>
+        </div>
+    </footer>
 </body>
 </html> 

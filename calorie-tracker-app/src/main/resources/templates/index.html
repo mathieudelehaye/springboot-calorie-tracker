@@ -7,30 +7,35 @@
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>Calorie Tracker Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50 min-h-screen">
   <!-- HEADER -->
-  <header class="bg-white shadow">
-    <div class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-900">Calorie Tracker Dashboard</h1>
-        
-        <!-- User info and logout -->
-        <div class="flex items-center space-x-4">
-          <span class="text-gray-700">Welcome, <span th:text="${#authentication.name}">Coach</span></span>
+  <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-8 mb-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 w-[95%] md:w-[85%] lg:w-[60%]">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold flex items-center">
+            <i class="fas fa-chart-line mr-3"></i> Calorie Tracker Dashboard
+          </h1>
+          <p class="mt-2 text-indigo-100">
+            Track nutrition and manage athletes - Welcome, <span th:text="${#authentication.name}" class="font-semibold">Coach</span>
+          </p>
+        </div>
+        <div>
           <form th:action="@{/logout}" method="post" class="inline">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <button type="submit"
-                    class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-              Logout
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center">
+              <i class="fas fa-sign-out-alt mr-2"></i> Logout
             </button>
           </form>
         </div>
       </div>
     </div>
-  </header>
+  </div>
 
-  <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 w-[95%] md:w-[85%] lg:w-[60%]">
     <!-- ATHLETES SECTION -->
     <div th:replace="fragments/athletes :: management"></div>
 
@@ -62,8 +67,13 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="py-4 text-center text-gray-500 text-sm">
-    © Mathieu Delehaye 2025
+  <footer class="py-8 text-center text-gray-500 text-sm bg-white mt-12 border-t border-gray-200">
+    <div class="container mx-auto px-4 w-[95%] md:w-[85%] lg:w-[60%]">
+      <p class="flex items-center justify-center">
+        <i class="fas fa-heart text-red-400 mr-2"></i>
+        © Mathieu Delehaye 2025 - Calorie Tracker Dashboard
+      </p>
+    </div>
   </footer>
 </body>
 </html>

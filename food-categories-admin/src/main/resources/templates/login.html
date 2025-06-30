@@ -1,80 +1,74 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Categories Admin - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </head>
-<body class="bg-gradient-to-br from-indigo-500 to-purple-600 min-h-screen flex items-center">
-    <div class="w-full max-w-md mx-auto px-4">
-        <div class="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
-            <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">🍎 Food Categories Admin</h2>
-                <p class="text-gray-600">Manage food categories database</p>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-[95%] md:w-[85%] lg:w-[60%] max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold mb-2">Food Categories Admin</h1>
+                <p class="text-gray-600">Manage food categories for the Diet Manager app</p>
             </div>
 
-            <!-- Demo Credentials Box -->
+            <!-- Demo Credentials -->
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                <h6 class="text-green-800 font-semibold mb-2 flex items-center">
-                    <i class="fas fa-info-circle mr-2"></i> Demo Credentials
-                </h6>
-                <p class="text-green-700 mb-2">
-                    <strong>Username:</strong> 
-                    <code class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm" th:text="${demoUsername}">mathieu</code>
-                </p>
-                <p class="text-green-700 mb-0">
-                    <strong>Password:</strong> 
-                    <code class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm" th:text="${demoPassword}">coach123</code>
-                </p>
+                <h3 class="text-green-800 font-medium mb-1">Demo Credentials</h3>
+                <div class="text-green-700 text-sm">
+                    <div><span class="font-medium">Username:</span> Mathieu</div>
+                    <div><span class="font-medium">Password:</span> Mathieu</div>
+                </div>
             </div>
 
-            <!-- Error Messages -->
-            <div th:if="${errorMessage}" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <span th:text="${errorMessage}"></span>
+            <div th:if="${param.error}" class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6">
+                Invalid username or password.
             </div>
 
-            <!-- Success Messages -->
-            <div th:if="${logoutMessage}" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4 flex items-center">
-                <i class="fas fa-check-circle mr-2"></i>
-                <span th:text="${logoutMessage}"></span>
+            <div th:if="${param.logout}" class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 mb-6">
+                You have been logged out.
             </div>
 
-            <!-- Login Form -->
-            <form th:action="@{/login}" method="post" class="space-y-4">
+            <form th:action="@{/login}" method="post" class="space-y-6">
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                     <input type="text" 
                            id="username" 
                            name="username" 
-                           th:value="${demoUsername}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           value="Mathieu"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                            required>
                 </div>
-                
+
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" 
                            id="password" 
                            name="password" 
-                           th:value="${demoPassword}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           value="Mathieu"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                            required>
                 </div>
-                
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center text-lg">
-                    <i class="fas fa-sign-in-alt mr-2"></i> Login as Admin
-                </button>
-            </form>
 
-            <div class="text-center mt-6">
-                <small class="text-gray-500 flex items-center justify-center">
-                    <i class="fas fa-shield-alt mr-1"></i> Admin access only - Coach Mathieu
-                </small>
-            </div>
+                <div>
+                    <button type="submit" 
+                            class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                        Login
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="fixed bottom-0 w-full bg-purple-600 bg-opacity-90 shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="text-center text-white text-sm">
+                © 2024 Diet Manager. All rights reserved.
+            </div>
+        </div>
+    </footer>
 </body>
 </html> 

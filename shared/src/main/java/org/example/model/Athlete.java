@@ -97,7 +97,7 @@ public class Athlete extends BaseEntity {
 
     public void addDay(Day day) {
         if (!days.contains(day)) {
-            days.add(day);
+        days.add(day);
         }
         if (day.getAthlete() != this) {
             day.setAthlete(this);
