@@ -96,7 +96,9 @@ public class Athlete extends BaseEntity {
     // --- Relationship helper methods ---
 
     public void addDay(Day day) {
-        days.add(day);
+        if (!days.contains(day)) {
+            days.add(day);
+        }
         if (day.getAthlete() != this) {
             day.setAthlete(this);
         }
