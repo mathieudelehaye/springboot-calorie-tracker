@@ -4,44 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Categories Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .header-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        .table th {
-            background-color: #f8f9fa;
-            border-top: none;
-        }
-        .btn-action {
-            margin-right: 5px;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
     <!-- Header -->
-    <div class="header-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1><i class="fas fa-apple-alt"></i> Food Categories Management</h1>
-                    <p class="mb-0">Manage food categories database - Logged in as <span sec:authentication="name">Coach</span></p>
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-8 mb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <i class="fas fa-apple-alt mr-3"></i> Food Categories Management
+                    </h1>
+                    <p class="mt-2 text-indigo-100">
+                        Manage food categories database - Logged in as <span sec:authentication="name" class="font-semibold">Coach</span>
+                    </p>
                 </div>
-                <div class="col-auto">
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-outline-light">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                <div>
+                    <form th:action="@{/logout}" method="post" class="inline">
+                        <button type="submit" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
                         </button>
                     </form>
                 </div>
@@ -49,140 +31,158 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Messages -->
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> <span th:text="${successMessage}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div th:if="${successMessage}" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button onclick="this.parentElement.style.display='none'" class="ml-auto text-green-600 hover:text-green-800">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle"></i> <span th:text="${errorMessage}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div th:if="${errorMessage}" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-center">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button onclick="this.parentElement.style.display='none'" class="ml-auto text-red-600 hover:text-red-800">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
-        <div class="row">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Add New Food Category -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-plus"></i> Add New Food Category</h5>
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-blue-600 text-white px-6 py-4">
+                        <h5 class="text-lg font-semibold flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Add New Food Category
+                        </h5>
                     </div>
-                    <div class="card-body">
-                                                 <form th:action="@{/admin/food-categories}" th:object="${newFoodCategory}" method="post">
-                             <div class="mb-3">
-                                 <label for="name" class="form-label">Category Name</label>
-                                 <input type="text" class="form-control" th:field="*{name}" 
-                                        th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" 
-                                        placeholder="e.g., Banana, Apple" required>
-                                 <div th:if="${#fields.hasErrors('name')}" class="invalid-feedback">
-                                     <span th:errors="*{name}"></span>
-                                 </div>
-                             </div>
+                    <div class="p-6">
+                        <form th:action="@{/admin/food-categories}" th:object="${newFoodCategory}" method="post" class="space-y-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                                <input type="text" 
+                                       th:field="*{name}" 
+                                       th:classappend="${#fields.hasErrors('name')} ? 'border-red-500' : 'border-gray-300'" 
+                                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       placeholder="e.g., Banana, Apple" 
+                                       required>
+                                <div th:if="${#fields.hasErrors('name')}" class="mt-1 text-sm text-red-600">
+                                    <span th:errors="*{name}"></span>
+                                </div>
+                            </div>
 
-                             <div class="row">
-                                 <div class="col-md-6">
-                                     <div class="mb-3">
-                                         <label for="prot" class="form-label">Protein (g/100g)</label>
-                                         <input type="number" step="0.1" class="form-control" th:field="*{prot}" 
-                                                placeholder="0.0">
-                                     </div>
-                                 </div>
-                                 <div class="col-md-6">
-                                     <div class="mb-3">
-                                         <label for="carb" class="form-label">Carbs (g/100g)</label>
-                                         <input type="number" step="0.1" class="form-control" th:field="*{carb}" 
-                                                placeholder="0.0">
-                                     </div>
-                                 </div>
-                             </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="prot" class="block text-sm font-medium text-gray-700 mb-2">Protein (g/100g)</label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           th:field="*{prot}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           placeholder="0.0">
+                                </div>
+                                <div>
+                                    <label for="carb" class="block text-sm font-medium text-gray-700 mb-2">Carbs (g/100g)</label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           th:field="*{carb}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           placeholder="0.0">
+                                </div>
+                            </div>
 
-                             <div class="row">
-                                 <div class="col-md-6">
-                                     <div class="mb-3">
-                                         <label for="fat" class="form-label">Fat (g/100g)</label>
-                                         <input type="number" step="0.1" class="form-control" th:field="*{fat}" 
-                                                placeholder="0.0">
-                                     </div>
-                                 </div>
-                                 <div class="col-md-6">
-                                     <div class="mb-3">
-                                         <label for="kcal" class="form-label">Calories (kcal/100g)</label>
-                                         <input type="number" step="0.1" class="form-control" th:field="*{kcal}" 
-                                                placeholder="0.0">
-                                     </div>
-                                 </div>
-                             </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="fat" class="block text-sm font-medium text-gray-700 mb-2">Fat (g/100g)</label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           th:field="*{fat}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           placeholder="0.0">
+                                </div>
+                                <div>
+                                    <label for="kcal" class="block text-sm font-medium text-gray-700 mb-2">Calories (kcal/100g)</label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           th:field="*{kcal}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           placeholder="0.0">
+                                </div>
+                            </div>
                              
-                             <button type="submit" class="btn btn-primary w-100">
-                                 <i class="fas fa-save"></i> Add Food Category
-                             </button>
-                         </form>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Add Food Category
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
 
             <!-- Food Categories List -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-list"></i> Food Categories (<span th:text="${#lists.size(foodCategories)}">0</span>)</h5>
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-green-600 text-white px-6 py-4">
+                        <h5 class="text-lg font-semibold flex items-center">
+                            <i class="fas fa-list mr-2"></i> Food Categories (<span th:text="${#lists.size(foodCategories)}">0</span>)
+                        </h5>
                     </div>
-                    <div class="card-body">
-                        <div th:if="${#lists.isEmpty(foodCategories)}" class="text-center text-muted py-4">
-                            <i class="fas fa-folder-open fa-3x mb-3"></i>
-                            <p>No food categories found. Add your first category!</p>
+                    <div class="p-6">
+                        <div th:if="${#lists.isEmpty(foodCategories)}" class="text-center text-gray-500 py-12">
+                            <i class="fas fa-folder-open text-6xl mb-4 text-gray-300"></i>
+                            <p class="text-lg">No food categories found. Add your first category!</p>
                         </div>
                         
                         <div th:unless="${#lists.isEmpty(foodCategories)}">
-                            <div class="table-responsive">
-                                                                 <table class="table table-hover">
-                                     <thead>
-                                         <tr>
-                                             <th>ID</th>
-                                             <th>Name</th>
-                                             <th>Protein</th>
-                                             <th>Carbs</th>
-                                             <th>Fat</th>
-                                             <th>Calories</th>
-                                             <th>Actions</th>
-                                         </tr>
-                                     </thead>
-                                     <tbody>
-                                         <tr th:each="category : ${foodCategories}">
-                                             <td th:text="${category.id}">1</td>
-                                             <td>
-                                                 <strong th:text="${category.name}">Food Name</strong>
-                                             </td>
-                                             <td>
-                                                 <span th:text="${category.prot != null ? category.prot + 'g' : '-'}">0g</span>
-                                             </td>
-                                             <td>
-                                                 <span th:text="${category.carb != null ? category.carb + 'g' : '-'}">0g</span>
-                                             </td>
-                                             <td>
-                                                 <span th:text="${category.fat != null ? category.fat + 'g' : '-'}">0g</span>
-                                             </td>
-                                             <td>
-                                                 <span th:text="${category.kcal != null ? category.kcal + ' kcal' : '-'}">0 kcal</span>
-                                             </td>
-                                             <td>
-                                                 <a th:href="@{/admin/food-categories/edit/{id}(id=${category.id})}" 
-                                                    class="btn btn-sm btn-outline-primary btn-action">
-                                                     <i class="fas fa-edit"></i> Edit
-                                                 </a>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Protein</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carbs</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fat</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calories</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr th:each="category : ${foodCategories}" class="hover:bg-gray-50">
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${category.id}">1</td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900" th:text="${category.name}">Food Name</div>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <span th:text="${category.prot != null ? category.prot + 'g' : '-'}">0g</span>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <span th:text="${category.carb != null ? category.carb + 'g' : '-'}">0g</span>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <span th:text="${category.fat != null ? category.fat + 'g' : '-'}">0g</span>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <span th:text="${category.kcal != null ? category.kcal + ' kcal' : '-'}">0 kcal</span>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                <a th:href="@{/admin/food-categories/edit/{id}(id=${category.id})}" 
+                                                   class="inline-flex items-center px-3 py-1 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition duration-200">
+                                                    <i class="fas fa-edit mr-1"></i> Edit
+                                                </a>
                                                  
-                                                 <form th:action="@{/admin/food-categories/delete/{id}(id=${category.id})}" 
-                                                       method="post" class="d-inline"
-                                                       onsubmit="return confirm('Are you sure you want to delete this food category?')">
-                                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                         <i class="fas fa-trash"></i> Delete
-                                                     </button>
-                                                 </form>
-                                             </td>
-                                         </tr>
-                                     </tbody>
-                                 </table>
+                                                <form th:action="@{/admin/food-categories/delete/{id}(id=${category.id})}" 
+                                                      method="post" 
+                                                      class="inline"
+                                                      onsubmit="return confirm('Are you sure you want to delete this food category?')">
+                                                    <button type="submit" class="inline-flex items-center px-3 py-1 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition duration-200">
+                                                        <i class="fas fa-trash mr-1"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -190,8 +190,5 @@
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </body>
 </html> 

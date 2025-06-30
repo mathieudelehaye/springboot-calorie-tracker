@@ -4,40 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${foodCategory.id != null ? 'Edit Food Category' : 'Add New Food Category'}">Food Category</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .header-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
     <!-- Header -->
-    <div class="header-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1><i class="fas fa-edit"></i> Edit Food Category</h1>
-                    <p class="mb-0">Modify food category details - Logged in as <span sec:authentication="name">Coach</span></p>
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-8 mb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <i class="fas fa-edit mr-3"></i> Edit Food Category
+                    </h1>
+                    <p class="mt-2 text-indigo-100">
+                        Modify food category details - Logged in as <span sec:authentication="name" class="font-semibold">Coach</span>
+                    </p>
                 </div>
-                <div class="col-auto">
-                    <a href="/admin/food-categories" class="btn btn-outline-light me-2">
-                        <i class="fas fa-arrow-left"></i> Back to Categories
+                <div class="flex space-x-3">
+                    <a href="/admin/food-categories" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Categories
                     </a>
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-outline-light">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                    <form th:action="@{/logout}" method="post" class="inline">
+                        <button type="submit" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
                         </button>
                     </form>
                 </div>
@@ -45,60 +34,90 @@
         </div>
     </div>
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 th:text="${foodCategory.id != null ? 'Edit Food Category' : 'Add New Food Category'}">Food Category Form</h3>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-center">
+            <div class="w-full max-w-2xl">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-xl font-semibold text-gray-900" th:text="${foodCategory.id != null ? 'Edit Food Category' : 'Add New Food Category'}">Food Category Form</h3>
                     </div>
-                    <div class="card-body">
+                    <div class="p-6">
                         <form th:action="${foodCategory.id != null ? '/admin/food-categories/edit/' + foodCategory.id : '/admin/food-categories/new'}" 
-                              th:object="${foodCategory}" method="post">
+                              th:object="${foodCategory}" 
+                              method="post" 
+                              class="space-y-6">
                             
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
-                                <div class="form-text">Enter the name of the food category</div>
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Name <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" 
+                                       id="name" 
+                                       th:field="*{name}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       required>
+                                <p class="mt-1 text-sm text-gray-500">Enter the name of the food category</p>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="prot" class="form-label">Protein (g/100g) <span class="text-danger">*</span></label>
-                                        <input type="number" step="0.1" class="form-control" id="prot" th:field="*{prot}" required>
-                                        <div class="form-text">Protein content per 100g</div>
-                                    </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="prot" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Protein (g/100g) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           id="prot" 
+                                           th:field="*{prot}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           required>
+                                    <p class="mt-1 text-sm text-gray-500">Protein content per 100g</p>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="carb" class="form-label">Carbohydrates (g/100g) <span class="text-danger">*</span></label>
-                                        <input type="number" step="0.1" class="form-control" id="carb" th:field="*{carb}" required>
-                                        <div class="form-text">Carbohydrate content per 100g</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="fat" class="form-label">Fat (g/100g) <span class="text-danger">*</span></label>
-                                        <input type="number" step="0.1" class="form-control" id="fat" th:field="*{fat}" required>
-                                        <div class="form-text">Fat content per 100g</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="kcal" class="form-label">Calories (kcal/100g) <span class="text-danger">*</span></label>
-                                        <input type="number" step="0.1" class="form-control" id="kcal" th:field="*{kcal}" required>
-                                        <div class="form-text">Caloric content per 100g</div>
-                                    </div>
+                                <div>
+                                    <label for="carb" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Carbohydrates (g/100g) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           id="carb" 
+                                           th:field="*{carb}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           required>
+                                    <p class="mt-1 text-sm text-gray-500">Carbohydrate content per 100g</p>
                                 </div>
                             </div>
 
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="/admin/food-categories" class="btn btn-secondary me-md-2">Cancel</a>
-                                <button type="submit" class="btn btn-primary" th:text="${foodCategory.id != null ? 'Update Category' : 'Create Category'}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="fat" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Fat (g/100g) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           id="fat" 
+                                           th:field="*{fat}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           required>
+                                    <p class="mt-1 text-sm text-gray-500">Fat content per 100g</p>
+                                </div>
+                                <div>
+                                    <label for="kcal" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Calories (kcal/100g) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           step="0.1" 
+                                           id="kcal" 
+                                           th:field="*{kcal}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           required>
+                                    <p class="mt-1 text-sm text-gray-500">Caloric content per 100g</p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                                <a href="/admin/food-categories" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200 text-center">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200" th:text="${foodCategory.id != null ? 'Update Category' : 'Create Category'}">
                                     Save Category
                                 </button>
                             </div>
@@ -108,8 +127,5 @@
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </body>
 </html> 
