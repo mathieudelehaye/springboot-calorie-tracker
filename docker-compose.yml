@@ -28,7 +28,7 @@ services:
       context: .
       dockerfile: food-categories-admin/Dockerfile
     ports:
-      - "8081:8081"
+      - "8081:8080"
     volumes:
       # Mount your existing config directory (READ-ONLY for security)
       - ./config:/app/config:ro
@@ -41,7 +41,7 @@ services:
       
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
