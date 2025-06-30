@@ -2,7 +2,7 @@ services:
   calorie-tracker:
     build:
       context: .
-      dockerfile: app/Dockerfile
+      dockerfile: calorie-tracker-app/Dockerfile
     ports:
       - "8080:8080"
     volumes:
@@ -18,6 +18,30 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  food-categories-admin:
+    build:
+      context: .
+      dockerfile: food-categories-admin/Dockerfile
+    ports:
+      - "8081:8081"
+    volumes:
+      # Mount your existing config directory (READ-ONLY for security)
+      - ./config:/app/config:ro
+    environment:
+      # Spring Boot Configuration
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:file:/app/config/env.properties
+      - SPRING_JPA_SHOW_SQL=false
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=INFO
+      
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3

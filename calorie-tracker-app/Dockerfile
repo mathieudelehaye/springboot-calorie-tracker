@@ -5,19 +5,24 @@ FROM gradle:8.14.1-jdk17 AS builder
 WORKDIR /app
 
 # Copy gradle files for dependency caching
-COPY app/build.gradle ./
 COPY settings.gradle ./
 COPY gradle gradle
 COPY gradlew* ./
 
+# Copy all build.gradle files
+COPY calorie-tracker-app/build.gradle calorie-tracker-app/
+COPY shared/build.gradle shared/
+COPY food-categories-admin/build.gradle food-categories-admin/
+
 # Download dependencies (this layer will be cached if dependencies don't change)
-RUN gradle build --no-daemon || return 0
+RUN gradle calorie-tracker-app:build --no-daemon -x test || return 0
 
 # Copy source code
-COPY app/src src
+COPY calorie-tracker-app/src calorie-tracker-app/src
+COPY shared/src shared/src
 
 # Build the application
-RUN gradle bootJar --no-daemon
+RUN gradle calorie-tracker-app:bootJar --no-daemon
 
 # Runtime stage - Using Eclipse Temurin (recommended OpenJDK distribution)
 FROM eclipse-temurin:17-jre-jammy
@@ -32,7 +37,7 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy the built jar from builder stage
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/calorie-tracker-app/build/libs/*.jar app.jar
 
 # Change ownership to springboot user
 RUN chown springboot:springboot app.jar

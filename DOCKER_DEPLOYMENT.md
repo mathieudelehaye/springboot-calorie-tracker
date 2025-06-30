@@ -1,145 +1,197 @@
 # Docker Deployment Guide
 
-This guide covers local Docker testing and Azure Container Apps deployment for the SpringBoot Calorie Tracker application.
+## 🚀 Quick Start (5 Minutes)
 
-## Prerequisites
+### 1. Setup Configuration
+```bash
+# Copy the environment template
+cp docker.env.example config/env.properties
+
+# Edit with your actual Neon database credentials
+notepad config/env.properties  # Windows or nano config/env.properties (Linux/macOS)
+```
+
+### 2. Run Both Applications
+```bash
+# Build and start both applications
+docker-compose up --build
+
+# Access applications:
+# 🍎 Diet Manager: http://localhost:8080
+# ⚙️ Food Admin: http://localhost:8081
+```
+
+### 3. Health Checks
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8081/actuator/health
+```
+
+**That's it!** Both applications are now running in Docker containers.
+
+---
+
+## 📋 Complete Guide
+
+This guide covers local Docker testing and Azure Container Apps deployment for both the **Diet Manager App** and **Food Categories Admin App**.
+
+### Architecture Overview
+
+The project consists of two Spring Boot applications:
+
+- **🍎 Diet Manager App** (`calorie-tracker-app`) - Port 8080
+  - Main application for coaches to manage athletes' diet plans
+  - Uses both primary database and food categories database
+  
+- **⚙️ Food Categories Admin** (`food-categories-admin`) - Port 8081
+  - Admin interface to manage food categories
+  - Uses only the food categories database
+
+### Prerequisites
 
 - Docker Desktop installed and running
-- Your Neon database credentials (both main DB and food categories DB)
+- Your Neon database credentials (both primary DB and food categories DB)
 - Azure CLI (for Azure Container Apps deployment)
 
-## Local Docker Testing
+---
 
-### 1. Use Existing Database Configuration
+## 🐳 Local Docker Deployment
 
-**Option A: Use your existing `config/env.properties` file (Recommended)**
+### Database Configuration
 
-Your application already uses `config/env.properties` with your Neon database credentials:
+**Option A: Use Existing Config File (Recommended)**
+
+Update your existing `config/env.properties` file with database credentials:
+
 ```properties
-# Primary Database (athletes, coaches, days, foods, meals)
-SPRING_DATASOURCE_PRIMARY_URL=jdbc:postgresql://your-primary-db-host/neondb?sslmode=require
+# =================================================================
+# CALORIE TRACKER APP (Main Application) - Port 8080
+# =================================================================
+# Primary Database (athletes, coaches, days, meals, foods)
+SPRING_DATASOURCE_PRIMARY_URL=jdbc:postgresql://your-primary-db-host.aws.neon.tech:5432/neondb?sslmode=require
 SPRING_DATASOURCE_PRIMARY_USERNAME=your-username
 SPRING_DATASOURCE_PRIMARY_PASSWORD=your-password
 
-# Food Categories Database (food categories only)
-SPRING_DATASOURCE_FOODCATEGORIES_URL=jdbc:postgresql://your-foodcategories-db-host/neondb?sslmode=require
+# Food Categories Database (for cross-database lookups)
+SPRING_DATASOURCE_FOODCATEGORIES_URL=jdbc:postgresql://your-foodcategories-db-host.aws.neon.tech:5432/neondb?sslmode=require
 SPRING_DATASOURCE_FOODCATEGORIES_USERNAME=your-username
 SPRING_DATASOURCE_FOODCATEGORIES_PASSWORD=your-password
+
+# =================================================================
+# FOOD CATEGORIES ADMIN APP - Port 8081
+# =================================================================
+# Food Categories Database (primary database for admin app)
+SPRING_DATASOURCE_FOODCATEGORY_URL=jdbc:postgresql://your-foodcategories-db-host.aws.neon.tech:5432/neondb?sslmode=require
+SPRING_DATASOURCE_FOODCATEGORY_USERNAME=your-username
+SPRING_DATASOURCE_FOODCATEGORY_PASSWORD=your-password
 ```
 
-No additional setup needed! Docker will use these existing credentials.
-
-**Option B: Create separate `.env` file (Alternative)**
-
-If you prefer to keep Docker credentials separate:
-1. Copy the example: `cp docker.env.example .env`
-2. Edit `.env` with your Neon credentials:
-   ```env
-   # Main Database (Neon DB1)
-   MAIN_DB_URL=jdbc:postgresql://ep-xxx-xxx.us-east-1.aws.neon.tech:5432/neondb?sslmode=require
-   MAIN_DB_USERNAME=your-username
-   MAIN_DB_PASSWORD=your-password
-
-   # Food Categories Database (Neon DB2)
-   FOODCATEGORY_DB_URL=jdbc:postgresql://ep-yyy-yyy.us-east-1.aws.neon.tech:5432/neondb?sslmode=require
-   FOODCATEGORY_DB_USERNAME=your-username
-   FOODCATEGORY_DB_PASSWORD=your-password
-   ```
-
-### 2. Build and Run with Docker Compose
+**Option B: Create from Template**
 
 ```bash
-# Build and start the application
+# Copy the template
+cp docker.env.example config/env.properties
+
+# Edit with your actual Neon database credentials
+nano config/env.properties  # or use your preferred editor
+```
+
+### Build and Run Both Applications
+
+```bash
+# Build and start both applications
 docker-compose up --build
 
 # Run in background
 docker-compose up --build -d
 
-# View logs
-docker-compose logs -f calorie-tracker
+# View logs for both services
+docker-compose logs -f
 
-# Stop the application
+# View logs for specific service
+docker-compose logs -f calorie-tracker
+docker-compose logs -f food-categories-admin
+
+# Stop both applications
 docker-compose down
 ```
 
-### 3. Test the Application
+### Access Applications
 
-- **Application URL**: http://localhost:8080
-- **Health Check**: http://localhost:8080/actuator/health
-- **Login Credentials**: Use your existing coach credentials from the database
+- **🍎 Diet Manager App**: http://localhost:8080
+  - Health Check: http://localhost:8080/actuator/health
+  
+- **⚙️ Food Categories Admin**: http://localhost:8081  
+  - Health Check: http://localhost:8081/actuator/health
 
-### 4. Direct Docker Commands with Environment Variables (Secure Method)
+### Individual Docker Commands (Alternative)
 
-#### Linux/macOS (Bash)
+#### Build Individual Images
 
 ```bash
-# Build the image
-cd app
-docker build -t calorie-tracker:latest .
+# Build Diet Manager App
+./gradlew :calorie-tracker-app:build
+docker build -f calorie-tracker-app/Dockerfile -t diet-manager:latest .
 
-# Run the container with environment variables (SECURE - no credentials in image)
-docker run -d \
-  --name calorie-tracker \
-  -p 8080:8080 \
-  -e SPRING_DATASOURCE_PRIMARY_URL="jdbc:postgresql://your-primary-host/neondb?sslmode=require" \
-  -e SPRING_DATASOURCE_PRIMARY_USERNAME="your-username" \
-  -e SPRING_DATASOURCE_PRIMARY_PASSWORD="your-new-password" \
-  -e SPRING_DATASOURCE_FOODCATEGORIES_URL="jdbc:postgresql://your-foodcategories-host/neondb?sslmode=require" \
-  -e SPRING_DATASOURCE_FOODCATEGORIES_USERNAME="your-username" \
-  -e SPRING_DATASOURCE_FOODCATEGORIES_PASSWORD="your-new-password" \
-  -e SPRING_PROFILES_ACTIVE=docker \
-  calorie-tracker:latest
-
-# Check container status
-docker ps
-
-# View logs
-docker logs calorie-tracker
-
-# Stop and remove container
-docker stop calorie-tracker
-docker rm calorie-tracker
+# Build Food Categories Admin
+./gradlew :food-categories-admin:build  
+docker build -f food-categories-admin/Dockerfile -t food-admin:latest .
 ```
 
-#### Windows PowerShell
+#### Run with Environment Variables (Secure Method)
 
+**Linux/macOS:**
+```bash
+# Diet Manager App
+docker run -d \
+  --name diet-manager \
+  -p 8080:8080 \
+  -v $(pwd)/config:/app/config:ro \
+  -e SPRING_PROFILES_ACTIVE=docker \
+  -e SPRING_CONFIG_IMPORT=optional:file:/app/config/env.properties \
+  diet-manager:latest
+
+# Food Categories Admin
+docker run -d \
+  --name food-admin \
+  -p 8081:8081 \
+  -v $(pwd)/config:/app/config:ro \
+  -e SPRING_PROFILES_ACTIVE=docker \
+  -e SPRING_CONFIG_IMPORT=optional:file:/app/config/env.properties \
+  food-admin:latest
+```
+
+**Windows PowerShell:**
 ```powershell
-# Build the image
-cd app
-docker build -t calorie-tracker:latest .
-
-# Run the container with environment variables (SECURE - no credentials in image)
+# Diet Manager App
 docker run -d `
-  --name calorie-tracker `
+  --name diet-manager `
   -p 8080:8080 `
-  -e SPRING_DATASOURCE_PRIMARY_URL="jdbc:postgresql://your-primary-host/neondb?sslmode=require" `
-  -e SPRING_DATASOURCE_PRIMARY_USERNAME="your-username" `
-  -e SPRING_DATASOURCE_PRIMARY_PASSWORD="your-password" `
-  -e SPRING_DATASOURCE_FOODCATEGORIES_URL="jdbc:postgresql://your-foodcategories-host/neondb?sslmode=require" `
-  -e SPRING_DATASOURCE_FOODCATEGORIES_USERNAME="your-username" `
-  -e SPRING_DATASOURCE_FOODCATEGORIES_PASSWORD="your-password" `
+  -v ${PWD}/config:/app/config:ro `
   -e SPRING_PROFILES_ACTIVE=docker `
-  calorie-tracker:latest
+  -e SPRING_CONFIG_IMPORT=optional:file:/app/config/env.properties `
+  diet-manager:latest
 
-# Check container status
-docker ps
-
-# View logs
-docker logs calorie-tracker
-
-# Stop and remove container
-docker stop calorie-tracker
-docker rm calorie-tracker
+# Food Categories Admin  
+docker run -d `
+  --name food-admin `
+  -p 8081:8081 `
+  -v ${PWD}/config:/app/config:ro `
+  -e SPRING_PROFILES_ACTIVE=docker `
+  -e SPRING_CONFIG_IMPORT=optional:file:/app/config/env.properties `
+  food-admin:latest
 ```
 
 **🔒 Security Benefits:**
-- Credentials are **NOT baked into the Docker image**
-- Environment variables are **passed at runtime**
-- Image can be safely shared without exposing secrets
+- Credentials are **NOT baked into Docker images**
+- Configuration is **mounted at runtime** from external file
+- Images can be safely shared without exposing secrets
 
-## Azure Container Apps Deployment
+---
 
-### 1. Install Azure CLI and Container Apps Extension
+## ☁️ Azure Container Apps Deployment
+
+### 1. Prerequisites Setup
 
 ```bash
 # Install Azure CLI (if not already installed)
@@ -147,398 +199,309 @@ docker rm calorie-tracker
 
 # Install Container Apps extension
 az extension add --name containerapp
-```
 
-### 2. Login and Setup
-
-#### Linux/macOS (Bash)
-```bash
 # Login to Azure
 az login
 
 # Set your subscription (if you have multiple)
 az account set --subscription "your-subscription-id"
+```
 
+### 2. Create Azure Resources
+
+```bash
 # Create resource group
 az group create \
   --name calorie-tracker-rg \
   --location eastus
-```
 
-#### Windows PowerShell
-```powershell
-# Login to Azure
-az login
-
-# Set your subscription (if you have multiple)
-az account set --subscription "your-subscription-id"
-
-# Create resource group
-az group create `
-  --name calorie-tracker-rg `
-  --location eastus
-```
-
-### 3. Create Container Apps Environment
-
-#### Linux/macOS (Bash)
-```bash
 # Create Container Apps environment
 az containerapp env create \
   --name calorie-tracker-env \
   --resource-group calorie-tracker-rg \
   --location eastus
-```
 
-#### Windows PowerShell
-```powershell
-# Create Container Apps environment
-az containerapp env create `
-  --name calorie-tracker-env `
-  --resource-group calorie-tracker-rg `
-  --location eastus
-```
-
-### 4. Build and Push Image to Azure Container Registry
-
-#### Linux/macOS (Bash)
-```bash
-# Create Azure Container Registry
+# Create Azure Container Registry (ACR)
 az acr create \
   --resource-group calorie-tracker-rg \
   --name calorietrackeracr \
   --sku Basic \
   --admin-enabled true
+```
 
+### 3. Build and Push Images to Azure Container Registry
+
+```bash
 # Login to ACR
 az acr login --name calorietrackeracr
 
-# Option 1: Build and push using ACR Tasks (may fail on some subscriptions)
-az acr build \
-  --registry calorietrackeracr \
-  --image calorie-tracker:latest \
-  ./app
+# Build and push Diet Manager App
+./gradlew :calorie-tracker-app:build
+docker build -f calorie-tracker-app/Dockerfile -t calorietrackeracr.azurecr.io/diet-manager:latest .
+docker push calorietrackeracr.azurecr.io/diet-manager:latest
 
-# Option 2: Build locally and push (if ACR Tasks fail)
-cd app
-docker build -t calorie-tracker:latest .
-docker tag calorie-tracker:latest calorietrackeracr.azurecr.io/calorie-tracker:latest
-docker push calorietrackeracr.azurecr.io/calorie-tracker:latest
+# Build and push Food Categories Admin
+./gradlew :food-categories-admin:build
+docker build -f food-categories-admin/Dockerfile -t calorietrackeracr.azurecr.io/food-admin:latest .
+docker push calorietrackeracr.azurecr.io/food-admin:latest
 ```
 
-#### Windows PowerShell
-```powershell
-# Create Azure Container Registry
-az acr create `
-  --resource-group calorie-tracker-rg `
-  --name calorietrackeracr `
-  --sku Basic `
-  --admin-enabled true
+### 4. Create Secrets in Azure
 
-# Login to ACR
-az acr login --name calorietrackeracr
-
-# Option 1: Build and push using ACR Tasks (may fail on some subscriptions)
-az acr build `
-  --registry calorietrackeracr `
-  --image calorie-tracker:latest `
-  ./app
-
-# Option 2: Build locally and push (if ACR Tasks fail)
-cd app
-docker build -t calorie-tracker:latest .
-docker tag calorie-tracker:latest calorietrackeracr.azurecr.io/calorie-tracker:latest
-docker push calorietrackeracr.azurecr.io/calorie-tracker:latest
-```
-
-### 5. Deploy Container App with Secure Secrets
-
-**Option A: Using Secrets (Recommended for Production)**
-
-#### Linux/macOS (Bash)
 ```bash
-# Step 1: Create the container app first (without secrets)
-az containerapp create \
-  --name calorie-tracker-app \
-  --resource-group calorie-tracker-rg \
-  --environment calorie-tracker-env \
-  --image calorietrackeracr.azurecr.io/calorie-tracker:latest \
-  --registry-server calorietrackeracr.azurecr.io \
-  --target-port 8080 \
-  --ingress external \
-  --min-replicas 0 \
-  --max-replicas 1 \
-  --cpu 0.5 \
-  --memory 1Gi \
-  --env-vars \
-    "spring.datasource.primary.url=jdbc:postgresql://your-primary-host/neondb?sslmode=require" \
-    "spring.datasource.foodcategories.url=jdbc:postgresql://your-foodcategories-host/food-category?sslmode=require" \
-    SPRING_PROFILES_ACTIVE=docker
-
-# Step 2: Add secrets to the container app (both usernames and passwords for security)
-az containerapp secret set \
-  --name calorie-tracker-app \
+# Create secrets for database connections
+az containerapp env secret set \
+  --name calorie-tracker-env \
   --resource-group calorie-tracker-rg \
   --secrets \
+    primary-db-url="jdbc:postgresql://your-primary-db-host.aws.neon.tech:5432/neondb?sslmode=require" \
     primary-db-username="your-username" \
     primary-db-password="your-password" \
+    foodcategories-db-url="jdbc:postgresql://your-foodcategories-db-host.aws.neon.tech:5432/neondb?sslmode=require" \
     foodcategories-db-username="your-username" \
     foodcategories-db-password="your-password"
-
-# Step 3: Update the container app to use secrets for all credentials
-az containerapp update \
-  --name calorie-tracker-app \
-  --resource-group calorie-tracker-rg \
-  --set-env-vars \
-    "spring.datasource.primary.username=secretref:primary-db-username" \
-    "spring.datasource.primary.password=secretref:primary-db-password" \
-    "spring.datasource.foodcategories.username=secretref:foodcategories-db-username" \
-    "spring.datasource.foodcategories.password=secretref:foodcategories-db-password"
 ```
 
-#### Windows PowerShell
-```powershell
-# Step 1: Create the container app first (without secrets)
-az containerapp create `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --environment calorie-tracker-env `
-  --image calorietrackeracr.azurecr.io/calorie-tracker:latest `
-  --registry-server calorietrackeracr.azurecr.io `
-  --target-port 8080 `
-  --ingress external `
-  --min-replicas 0 `
-  --max-replicas 1 `
-  --cpu 0.5 `
-  --memory 1Gi `
-  --env-vars `
-    "spring.datasource.primary.url=jdbc:postgresql://your-primary-host/neondb?sslmode=require" `
-    "spring.datasource.foodcategories.url=jdbc:postgresql://your-foodcategories-host/food-category?sslmode=require" `
-    SPRING_PROFILES_ACTIVE=docker
+### 5. Deploy Diet Manager App to Azure Container Apps
 
-# Step 2: Add secrets to the container app (both usernames and passwords for security)
-az containerapp secret set `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --secrets `
-    primary-db-username="your-username" `
-    primary-db-password="your-password" `
-    foodcategories-db-username="your-username" `
-    foodcategories-db-password="your-password"
-
-# Step 3: Update the container app to use secrets for all credentials
-az containerapp update `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --set-env-vars `
-    "spring.datasource.primary.username=secretref:primary-db-username" `
-    "spring.datasource.primary.password=secretref:primary-db-password" `
-    "spring.datasource.foodcategories.username=secretref:foodcategories-db-username" `
-    "spring.datasource.foodcategories.password=secretref:foodcategories-db-password"
-```
-
-**Option B: Single Command Deployment (All Secrets Set During Creation)**
-
-#### Linux/macOS (Bash)
 ```bash
-# Create the container app with all credentials as secrets (recommended)
 az containerapp create \
-  --name calorie-tracker-app \
+  --name diet-manager-app \
   --resource-group calorie-tracker-rg \
   --environment calorie-tracker-env \
-  --image calorietrackeracr.azurecr.io/calorie-tracker:latest \
-  --registry-server calorietrackeracr.azurecr.io \
+  --image calorietrackeracr.azurecr.io/diet-manager:latest \
   --target-port 8080 \
   --ingress external \
-  --min-replicas 0 \
-  --max-replicas 1 \
-  --cpu 0.5 \
-  --memory 1Gi \
-  --secrets \
-    primary-db-username="your-username" \
-    primary-db-password="your-password" \
-    foodcategories-db-username="your-username" \
-    foodcategories-db-password="your-password" \
+  --min-replicas 1 \
+  --max-replicas 3 \
+  --cpu 1.0 \
+  --memory 2.0Gi \
+  --registry-server calorietrackeracr.azurecr.io \
   --env-vars \
-    "spring.datasource.primary.url=jdbc:postgresql://your-primary-host/neondb?sslmode=require" \
-    "spring.datasource.primary.username=secretref:primary-db-username" \
-    "spring.datasource.primary.password=secretref:primary-db-password" \
-    "spring.datasource.foodcategories.url=jdbc:postgresql://your-foodcategories-host/food-category?sslmode=require" \
-    "spring.datasource.foodcategories.username=secretref:foodcategories-db-username" \
-    "spring.datasource.foodcategories.password=secretref:foodcategories-db-password" \
-    SPRING_PROFILES_ACTIVE=docker
+    SPRING_PROFILES_ACTIVE=docker \
+    SPRING_DATASOURCE_PRIMARY_URL=secretref:primary-db-url \
+    SPRING_DATASOURCE_PRIMARY_USERNAME=secretref:primary-db-username \
+    SPRING_DATASOURCE_PRIMARY_PASSWORD=secretref:primary-db-password \
+    SPRING_DATASOURCE_FOODCATEGORIES_URL=secretref:foodcategories-db-url \
+    SPRING_DATASOURCE_FOODCATEGORIES_USERNAME=secretref:foodcategories-db-username \
+    SPRING_DATASOURCE_FOODCATEGORIES_PASSWORD=secretref:foodcategories-db-password
 ```
 
-#### Windows PowerShell
-```powershell
-# Create the container app with all credentials as secrets (recommended)
-az containerapp create `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --environment calorie-tracker-env `
-  --image calorietrackeracr.azurecr.io/calorie-tracker:latest `
-  --registry-server calorietrackeracr.azurecr.io `
-  --target-port 8080 `
-  --ingress external `
-  --min-replicas 0 `
-  --max-replicas 1 `
-  --cpu 0.5 `
-  --memory 1Gi `
-  --secrets `
-    primary-db-username="your-username" `
-    primary-db-password="your-password" `
-    foodcategories-db-username="your-username" `
-    foodcategories-db-password="your-password" `
-  --env-vars `
-    "spring.datasource.primary.url=jdbc:postgresql://your-primary-host/neondb?sslmode=require" `
-    "spring.datasource.primary.username=secretref:primary-db-username" `
-    "spring.datasource.primary.password=secretref:primary-db-password" `
-    "spring.datasource.foodcategories.url=jdbc:postgresql://your-foodcategories-host/food-category?sslmode=require" `
-    "spring.datasource.foodcategories.username=secretref:foodcategories-db-username" `
-    "spring.datasource.foodcategories.password=secretref:foodcategories-db-password" `
-    SPRING_PROFILES_ACTIVE=docker
-```
+### 6. Deploy Food Categories Admin to Azure Container Apps
 
-### 6. Get Application URL
-
-#### Linux/macOS (Bash)
 ```bash
-# Get the application URL
+az containerapp create \
+  --name food-admin-app \
+  --resource-group calorie-tracker-rg \
+  --environment calorie-tracker-env \
+  --image calorietrackeracr.azurecr.io/food-admin:latest \
+  --target-port 8081 \
+  --ingress external \
+  --min-replicas 1 \
+  --max-replicas 2 \
+  --cpu 0.5 \
+  --memory 1.0Gi \
+  --registry-server calorietrackeracr.azurecr.io \
+  --env-vars \
+    SPRING_PROFILES_ACTIVE=docker \
+    SPRING_DATASOURCE_FOODCATEGORY_URL=secretref:foodcategories-db-url \
+    SPRING_DATASOURCE_FOODCATEGORY_USERNAME=secretref:foodcategories-db-username \
+    SPRING_DATASOURCE_FOODCATEGORY_PASSWORD=secretref:foodcategories-db-password
+```
+
+### 7. Get Application URLs
+
+```bash
+# Get Diet Manager App URL
 az containerapp show \
-  --name calorie-tracker-app \
+  --name diet-manager-app \
+  --resource-group calorie-tracker-rg \
+  --query properties.configuration.ingress.fqdn \
+  --output tsv
+
+# Get Food Categories Admin URL  
+az containerapp show \
+  --name food-admin-app \
   --resource-group calorie-tracker-rg \
   --query properties.configuration.ingress.fqdn \
   --output tsv
 ```
 
-#### Windows PowerShell
-```powershell
-# Get the application URL
-az containerapp show `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --query properties.configuration.ingress.fqdn `
-  --output tsv
-```
+---
 
-## Troubleshooting
+## 🔧 Management & Troubleshooting
 
-### Common Issues
+### Local Docker Management
 
-1. **ACR Tasks Not Permitted Error**
-   ```
-   TasksOperationsNotAllowed: ACR Tasks requests are not permitted
-   ```
-   - **Solution**: Use local build and push instead of `az acr build`
-   - This is common on free/student Azure subscriptions
-   - Use Option 2 in the build commands above
-
-2. **Database Connection Timeout**
-   - Verify your Neon database URLs and credentials
-   - Ensure databases are not sleeping (Neon free tier has auto-suspend)
-
-3. **Health Check Failures**
-   - Check application logs: `docker logs calorie-tracker`
-   - Verify actuator endpoint: `/actuator/health`
-
-4. **Memory Issues**
-   - Increase memory allocation in Azure Container Apps
-   - Monitor resource usage with `az containerapp logs`
-
-5. **Secret Management Issues**
-   - Secrets are set on the **Container App**, not the environment
-   - Use `az containerapp secret set` (not `az containerapp env secret set`)
-   - Reference secrets with `secretref:secret-name` format
-
-### Useful Commands
-
-#### Linux/macOS (Bash)
 ```bash
-# Check container logs locally
-docker logs calorie-tracker -f
+# Check running containers
+docker ps
 
-# Check Azure Container App logs
-az containerapp logs show \
-  --name calorie-tracker-app \
-  --resource-group calorie-tracker-rg \
-  --follow
+# View logs
+docker-compose logs -f [service-name]
 
-# Scale down to save costs (scales to 0)
-az containerapp revision set-active \
-  --name calorie-tracker-app \
-  --resource-group calorie-tracker-rg \
-  --revision-name "revision-name"
+# Restart services
+docker-compose restart
 
-# Delete resources when done
-az group delete --name calorie-tracker-rg --yes --no-wait
+# Update and restart
+docker-compose up --build -d
+
+# Clean up
+docker-compose down
+docker system prune -f
 ```
 
-#### Windows PowerShell
-```powershell
-# Check container logs locally
-docker logs calorie-tracker -f
+### Common Troubleshooting
 
-# Check Azure Container App logs
-az containerapp logs show `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --follow
-
-# Scale down to save costs (scales to 0)
-az containerapp revision set-active `
-  --name calorie-tracker-app `
-  --resource-group calorie-tracker-rg `
-  --revision-name "revision-name"
-
-# Delete resources when done
-az group delete --name calorie-tracker-rg --yes --no-wait
+**Build fails?**
+```bash
+./gradlew clean build
+docker-compose up --build --force-recreate
 ```
 
-## Cost Optimization
+**Can't connect to database?**
+- Check your `config/env.properties` file has correct credentials
+- Ensure your Neon databases are not sleeping (free tier auto-suspends)
 
-- **Scale to Zero**: Container Apps automatically scales to 0 replicas when not in use
-- **Resource Limits**: Use minimal CPU (0.5) and memory (1Gi) for demo purposes
-- **Free Tier**: Stay within the monthly free allowances:
-  - 2 million requests
-  - 400,000 GB-seconds execution time
-  - 1 GB outbound data transfer
+**Port conflicts?**
+```bash
+# Stop any existing services on ports 8080/8081
+docker ps
+docker stop $(docker ps -q)
+```
 
-## Security Notes
+### Azure Container Apps Management
 
-### 🔐 Credential Management
+```bash
+# Check app status
+az containerapp show --name diet-manager-app --resource-group calorie-tracker-rg
+az containerapp show --name food-admin-app --resource-group calorie-tracker-rg
 
-- **Never commit credentials** to source control (`.env` files, `config/env.properties`)
-- **Use environment variables** for Docker deployment - credentials are NOT baked into images
-- **Azure Container Apps Secrets** - encrypted at rest, secure injection at runtime
-- **Azure Key Vault integration** - for enterprise-grade secret management
+# View logs
+az containerapp logs show --name diet-manager-app --resource-group calorie-tracker-rg
+az containerapp logs show --name food-admin-app --resource-group calorie-tracker-rg
 
-### 🛡️ Security Hierarchy (Best to Worst)
+# Scale applications
+az containerapp update --name diet-manager-app --resource-group calorie-tracker-rg --min-replicas 2 --max-replicas 5
+az containerapp update --name food-admin-app --resource-group calorie-tracker-rg --min-replicas 1 --max-replicas 3
 
-1. **Azure Key Vault** - Enterprise secret management
-2. **Container Apps Secrets** - Encrypted environment secrets  
-3. **Environment Variables** - Runtime injection (not stored in image)
-4. **Config Files** - ❌ NOT recommended for production (embedded in image)
+# Update applications (after pushing new images)
+az containerapp update --name diet-manager-app --resource-group calorie-tracker-rg --image calorietrackeracr.azurecr.io/diet-manager:latest
+az containerapp update --name food-admin-app --resource-group calorie-tracker-rg --image calorietrackeracr.azurecr.io/food-admin:latest
 
-### 🔐 Database Credential Security
+# Delete applications (cleanup)
+az containerapp delete --name diet-manager-app --resource-group calorie-tracker-rg
+az containerapp delete --name food-admin-app --resource-group calorie-tracker-rg
+az group delete --name calorie-tracker-rg
+```
 
-**All database credentials (usernames AND passwords) are now stored as secrets for maximum security:**
+---
 
-**Why Username Security Matters:**
-- ❌ **Information Disclosure**: Usernames reveal database structure and purpose
-- ❌ **Enumeration Attacks**: Helps attackers understand your system architecture
-- ❌ **Compliance**: Many regulations require all credentials as secrets
-- ❌ **Audit Trail**: Environment variables don't provide access logging
+## 📊 Monitoring and Health Checks
 
-**Security Benefits:**
-- ✅ **Defense in Depth**: Multiple layers of credential protection
-- ✅ **Audit Trails**: Azure logs all secret access attempts
-- ✅ **Encrypted Storage**: All credentials encrypted at rest and in transit
-- ✅ **Access Control**: RBAC controls who can view/modify secrets
-- ✅ **Compliance Ready**: Meets enterprise and regulatory requirements
+### Health Check Endpoints
 
-### 🔒 Additional Security
+- **Diet Manager**: `https://your-diet-manager-url/actuator/health`
+- **Food Admin**: `https://your-food-admin-url/actuator/health`
 
-- The application runs as a **non-root user** in the container
-- Consider using **Azure Managed Identity** for Azure resource access
-- Enable **HTTPS only** for production deployments
-- Use **private container registries** for sensitive applications 
+### Azure Application Insights (Optional)
+
+Add Application Insights for monitoring:
+
+```bash
+# Create Application Insights
+az monitor app-insights component create \
+  --app calorie-tracker-insights \
+  --location eastus \
+  --resource-group calorie-tracker-rg
+
+# Get instrumentation key
+az monitor app-insights component show \
+  --app calorie-tracker-insights \
+  --resource-group calorie-tracker-rg \
+  --query instrumentationKey \
+  --output tsv
+
+# Update container apps with Application Insights
+az containerapp update \
+  --name diet-manager-app \
+  --resource-group calorie-tracker-rg \
+  --set-env-vars APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=your-key"
+```
+
+---
+
+## 🔒 Security Best Practices
+
+✅ **Implemented:**
+- Credentials stored as Azure secrets (not in images)
+- Non-root user in Docker containers
+- Read-only config volume mounts
+- Network isolation with Container Apps environment
+
+✅ **Recommended:**
+- Enable Azure Container Registry vulnerability scanning
+- Use Azure Key Vault for sensitive secrets
+- Configure network access restrictions
+- Enable audit logging
+
+---
+
+## 🚀 CI/CD Integration
+
+### GitHub Actions Example
+
+```yaml
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Build and deploy
+        run: |
+          # Build applications
+          ./gradlew build
+          
+          # Push images
+          az acr login --name calorietrackeracr
+          docker build -f calorie-tracker-app/Dockerfile -t calorietrackeracr.azurecr.io/diet-manager:latest .
+          docker build -f food-categories-admin/Dockerfile -t calorietrackeracr.azurecr.io/food-admin:latest .
+          docker push calorietrackeracr.azurecr.io/diet-manager:latest
+          docker push calorietrackeracr.azurecr.io/food-admin:latest
+          
+          # Update container apps
+          az containerapp update --name diet-manager-app --resource-group calorie-tracker-rg --image calorietrackeracr.azurecr.io/diet-manager:latest
+          az containerapp update --name food-admin-app --resource-group calorie-tracker-rg --image calorietrackeracr.azurecr.io/food-admin:latest
+```
+
+---
+
+## 📝 Summary
+
+**Local Development:**
+- Use `docker-compose up --build` for both apps
+- Access Diet Manager at `http://localhost:8080`
+- Access Food Admin at `http://localhost:8081`
+
+**Azure Production:**
+- Both apps deployed as separate Container Apps
+- Secrets managed securely with Azure
+- Auto-scaling and health monitoring included
+- URLs provided after deployment
+
+**Security:**
+- No credentials in Docker images
+- External configuration management
+- Azure secrets integration 

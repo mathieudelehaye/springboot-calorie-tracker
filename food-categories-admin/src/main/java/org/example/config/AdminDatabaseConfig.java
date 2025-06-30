@@ -1,6 +1,5 @@
 package org.example.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -23,18 +22,9 @@ import java.util.Properties;
 )
 public class AdminDatabaseConfig {
 
-    @Value("${spring.datasource.foodcategory.url}")
-    private String foodCategoryUrl;
-
-    @Value("${spring.datasource.foodcategory.username}")
-    private String foodCategoryUsername;
-
-    @Value("${spring.datasource.foodcategory.password}")
-    private String foodCategoryPassword;
-
     @Bean
     @Primary
-    @ConfigurationProperties("spring.datasource.foodcategory")
+    @ConfigurationProperties("spring.datasource")
     public DataSourceProperties foodCategoryDataSourceProperties() {
         return new DataSourceProperties();
     }
@@ -44,9 +34,6 @@ public class AdminDatabaseConfig {
     public DataSource foodCategoryDataSource() {
         return foodCategoryDataSourceProperties()
                 .initializeDataSourceBuilder()
-                .url(foodCategoryUrl)
-                .username(foodCategoryUsername)
-                .password(foodCategoryPassword)
                 .build();
     }
 
