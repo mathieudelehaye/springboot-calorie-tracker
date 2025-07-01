@@ -37,17 +37,9 @@ public class AdminLoginController {
                        @RequestParam(value = "logout", required = false) String logout,
                        Model model) {
         
-        if (error != null) {
-            model.addAttribute("errorMessage", "Invalid username or password!");
-        }
-        
-        if (logout != null) {
-            model.addAttribute("logoutMessage", "You have been logged out successfully.");
-        }
-        
         // Add demo credentials for display
         model.addAttribute("demoUsername", "Mathieu");
-        model.addAttribute("demoPassword", "coach123");
+        model.addAttribute("demoPassword", "Mathieu");
         
         return "login";
     }
