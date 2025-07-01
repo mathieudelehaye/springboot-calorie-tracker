@@ -3,20 +3,15 @@ package org.example;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 
 @SpringBootApplication(
     scanBasePackages = {
         "org.example.config",
         "org.example.controller",
         "org.example.service",
-        "org.example.repository"
+        "org.example.repository",
+        "org.example.foodcategories"
     }
-)
-@EnableJpaRepositories(
-    basePackages = {"org.example.repository", "org.example.repository.foodcategories"}
 )
 @EntityScan(
     basePackageClasses = {

@@ -5,15 +5,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,12 @@ import java.util.Map;
 @Configuration
 @EnableTransactionManagement
 @EnableRetry
+@EnableJpaRepositories(
+    basePackages = {"org.example.repository"},
+    excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "org.example.repository.foodcategories.*"),
+    entityManagerFactoryRef = "primaryEntityManagerFactory",
+    transactionManagerRef = "primaryTransactionManager"
+)
 public class AdminDatabaseConfig {
     private static final Logger logger = LoggerFactory.getLogger(AdminDatabaseConfig.class);
 
@@ -46,7 +53,7 @@ public class AdminDatabaseConfig {
     @Value("${spring.datasource.password}")
     private String foodCategoriesDbPassword;
 
-    // Primary DataSource (for coaches authentication)
+    // Primary DataSource (for coaches authentication and main app entities)
     @Primary
     @Bean(name = "primaryDataSource")
     public DataSource primaryDataSource() {
@@ -101,72 +108,61 @@ public class AdminDatabaseConfig {
         }
     }
 
+    // Primary Entity Manager Factory (for Coach, Athletes, Days, Meals, Foods)
     @Primary
-    @Bean(name = "entityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
+    @Bean(name = "primaryEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
             EntityManagerFactoryBuilder builder,
-            @Qualifier("primaryDataSource") DataSource primaryDataSource,
-            @Qualifier("foodCategoriesDataSource") DataSource foodCategoriesDataSource) {
+            @Qualifier("primaryDataSource") DataSource primaryDataSource) {
         
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "none");
+        properties.put("hibernate.hbm2ddl.auto", "validate");
         properties.put("hibernate.show_sql", "true");
         properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false");
         
-        // Create a routing data source that will handle both databases
-        Map<Object, Object> targetDataSources = new HashMap<>();
-        targetDataSources.put("primary", primaryDataSource);
-        targetDataSources.put("foodCategories", foodCategoriesDataSource);
-        
-        AbstractRoutingDataSource routingDataSource = new AbstractRoutingDataSource() {
-            @Override
-            protected Object determineCurrentLookupKey() {
-                String currentPackage = "";
-                StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                for (StackTraceElement element : stackTrace) {
-                    if (element.getClassName().startsWith("org.example")) {
-                        currentPackage = element.getClassName();
-                        break;
-                    }
-                }
-                
-                // Use Coach authentication from primary database
-                if (currentPackage.contains("org.example.model") || currentPackage.contains("org.example.service.CoachUserDetailsService")) {
-                    logger.debug("Routing to primary database for coach authentication - " + currentPackage);
-                    return "primary";
-                }
-                
-                // Use food categories from secondary database
-                if (currentPackage.contains("org.example.foodcategories")) {
-                    logger.debug("Routing to food categories database - " + currentPackage);
-                    return "foodCategories";
-                }
-                
-                // Default to primary for any other case
-                logger.debug("Routing to primary database (default) - " + currentPackage);
-                return "primary";
-            }
-        };
-        routingDataSource.setTargetDataSources(targetDataSources);
-        routingDataSource.setDefaultTargetDataSource(primaryDataSource);
-        routingDataSource.afterPropertiesSet();
-        
         return builder
-                .dataSource(routingDataSource)
-                .packages(
-                    "org.example.model",           // For Coach entity
-                    "org.example.foodcategories"   // For FoodCategory entity
-                )
+                .dataSource(primaryDataSource)
+                .packages("org.example.model") // All main entities including Coach
                 .persistenceUnit("primary")
                 .properties(properties)
                 .build();
     }
 
+    // Food Categories Entity Manager Factory 
+    @Bean(name = "foodCategoriesEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean foodCategoriesEntityManagerFactory(
+            EntityManagerFactoryBuilder builder,
+            @Qualifier("foodCategoriesDataSource") DataSource foodCategoriesDataSource) {
+        
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        properties.put("hibernate.hbm2ddl.auto", "validate");
+        properties.put("hibernate.show_sql", "true");
+        properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false");
+        
+        return builder
+                .dataSource(foodCategoriesDataSource)
+                .packages("org.example.foodcategories") // FoodCategory entities
+                .persistenceUnit("foodcategories")
+                .properties(properties)
+                .build();
+    }
+
+    // Primary Transaction Manager
     @Primary
-    @Bean(name = "transactionManager")
-    public PlatformTransactionManager transactionManager(
-            @Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
-        return new JpaTransactionManager(entityManagerFactory);
+    @Bean(name = "primaryTransactionManager")
+    public PlatformTransactionManager primaryTransactionManager(
+            @Qualifier("primaryEntityManagerFactory") EntityManagerFactory primaryEntityManagerFactory) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager(primaryEntityManagerFactory);
+        logger.info("Configured primary transaction manager for authentication");
+        return transactionManager;
+    }
+
+    // Food Categories Transaction Manager
+    @Bean(name = "foodCategoriesTransactionManager")
+    public PlatformTransactionManager foodCategoriesTransactionManager(
+            @Qualifier("foodCategoriesEntityManagerFactory") EntityManagerFactory foodCategoriesEntityManagerFactory) {
+        return new JpaTransactionManager(foodCategoriesEntityManagerFactory);
     }
 } 

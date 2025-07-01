@@ -27,7 +27,7 @@ public class CoachUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    @Transactional(readOnly = true, value = "transactionManager")
+    @Transactional(readOnly = true, value = "primaryTransactionManager")
     @Retryable(
         value = {DataAccessException.class},
         maxAttempts = 3,
@@ -35,11 +35,14 @@ public class CoachUserDetailsService implements UserDetailsService {
     )
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
-            logger.debug("Attempting to load coach with username: {}", username);
+            logger.info("Attempting to load coach with username: {} from primary database", username);
             Coach coach = coachRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("Coach not found: " + username));
+                    .orElseThrow(() -> {
+                        logger.error("Coach not found in primary database: {}", username);
+                        return new UsernameNotFoundException("Coach not found: " + username);
+                    });
 
-            logger.debug("Successfully loaded coach: {}", username);
+            logger.info("Successfully loaded coach: {} from primary database", username);
             return new User(
                     coach.getUsername(),
                     coach.getPassword(),
