@@ -9,7 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Entity
-@Table(name = "coaches")
+@Table(name = "coaches", schema = "public")
 public class Coach extends BaseEntity implements UserDetails, CredentialsContainer {
 
     @Column(unique = true, nullable = false)

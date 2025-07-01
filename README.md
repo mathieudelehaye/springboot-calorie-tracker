@@ -3,7 +3,7 @@
 ## 🌐 Live Applications
 
 - **[Calorie Tracker App](https://calorie-tracker-app.wittyflower-c2822a5a.eastus.azurecontainerapps.io)** - Main application for managing athletes' nutrition
-- **[Food Categories Admin](https://food-categories-admin.wittyflower-c2822a5a.eastus.azurecontainerapps.io)** - Administrative interface for food categories
+- **Food Categories Admin** - Administrative interface for food categories *(Currently under testing)*
 
 ## 📸 Screenshots
 
