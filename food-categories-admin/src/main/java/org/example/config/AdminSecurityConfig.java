@@ -56,7 +56,7 @@ public class AdminSecurityConfig {
             public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                     AuthenticationException exception) throws IOException, ServletException {
                 logger.error("Authentication failed: " + exception.getMessage(), exception);
-                response.sendRedirect("/login?error=true&message=" + exception.getMessage());
+                response.sendRedirect("/login");
             }
         };
     }
@@ -77,13 +77,13 @@ public class AdminSecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout")
+                .logoutSuccessUrl("/login")
                 .permitAll()
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
                     logger.error("Authentication entry point failure: " + authException.getMessage(), authException);
-                    response.sendRedirect("/login?error=true");
+                    response.sendRedirect("/login");
                 })
             );
 
