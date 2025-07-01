@@ -91,7 +91,12 @@ public class DashboardController {
         model.addAttribute("newMeal", new Meal());
         model.addAttribute("newFood", new Food());
         
-        // If an athlete is selected, load their specific data
+        // If no athlete is selected but athletes exist, select the first one
+        if (athleteId == null && !allAthletes.isEmpty()) {
+            athleteId = allAthletes.get(0).getId();
+        }
+        
+        // If an athlete is selected (either explicitly or automatically), load their specific data
         if (athleteId != null) {
             Athlete selectedAthlete = athleteRepo.findById(athleteId)
                     .filter(a -> a.getCoach().equals(coach)) // Security: only coach's athletes
