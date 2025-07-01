@@ -58,8 +58,9 @@ public class AdminDatabaseConfig {
     @Bean(name = "primaryDataSource")
     public DataSource primaryDataSource() {
         try {
+            String driverClassName = primaryDbUrl.startsWith("jdbc:h2:") ? "org.h2.Driver" : "org.postgresql.Driver";
             DataSource dataSource = DataSourceBuilder.create()
-                    .driverClassName("org.postgresql.Driver")
+                    .driverClassName(driverClassName)
                     .url(primaryDbUrl)
                     .username(primaryDbUsername)
                     .password(primaryDbPassword)
@@ -72,8 +73,9 @@ public class AdminDatabaseConfig {
         } catch (Exception e) {
             logger.error("Failed to initialize primary database connection: {}", e.getMessage(), e);
             // Still return the datasource - let the application handle connection issues at runtime
+            String driverClassName = primaryDbUrl.startsWith("jdbc:h2:") ? "org.h2.Driver" : "org.postgresql.Driver";
             return DataSourceBuilder.create()
-                    .driverClassName("org.postgresql.Driver")
+                    .driverClassName(driverClassName)
                     .url(primaryDbUrl)
                     .username(primaryDbUsername)
                     .password(primaryDbPassword)
@@ -85,8 +87,9 @@ public class AdminDatabaseConfig {
     @Bean(name = "foodCategoriesDataSource")
     public DataSource foodCategoriesDataSource() {
         try {
+            String driverClassName = foodCategoriesDbUrl.startsWith("jdbc:h2:") ? "org.h2.Driver" : "org.postgresql.Driver";
             DataSource dataSource = DataSourceBuilder.create()
-                    .driverClassName("org.postgresql.Driver")
+                    .driverClassName(driverClassName)
                     .url(foodCategoriesDbUrl)
                     .username(foodCategoriesDbUsername)
                     .password(foodCategoriesDbPassword)
@@ -99,8 +102,9 @@ public class AdminDatabaseConfig {
         } catch (Exception e) {
             logger.error("Failed to initialize food categories database connection: {}", e.getMessage(), e);
             // Still return the datasource - let the application handle connection issues at runtime
+            String driverClassName = foodCategoriesDbUrl.startsWith("jdbc:h2:") ? "org.h2.Driver" : "org.postgresql.Driver";
             return DataSourceBuilder.create()
-                    .driverClassName("org.postgresql.Driver")
+                    .driverClassName(driverClassName)
                     .url(foodCategoriesDbUrl)
                     .username(foodCategoriesDbUsername)
                     .password(foodCategoriesDbPassword)
@@ -116,8 +120,9 @@ public class AdminDatabaseConfig {
             @Qualifier("primaryDataSource") DataSource primaryDataSource) {
         
         Map<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "validate");
+        properties.put("hibernate.dialect", primaryDbUrl.startsWith("jdbc:h2:") ? 
+            "org.hibernate.dialect.H2Dialect" : "org.hibernate.dialect.PostgreSQLDialect");
+        properties.put("hibernate.hbm2ddl.auto", "create-drop");
         properties.put("hibernate.show_sql", "true");
         properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false");
         
@@ -136,8 +141,9 @@ public class AdminDatabaseConfig {
             @Qualifier("foodCategoriesDataSource") DataSource foodCategoriesDataSource) {
         
         Map<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "validate");
+        properties.put("hibernate.dialect", foodCategoriesDbUrl.startsWith("jdbc:h2:") ? 
+            "org.hibernate.dialect.H2Dialect" : "org.hibernate.dialect.PostgreSQLDialect");
+        properties.put("hibernate.hbm2ddl.auto", "create-drop");
         properties.put("hibernate.show_sql", "true");
         properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false");
         
